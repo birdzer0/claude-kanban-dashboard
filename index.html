@@ -386,7 +386,7 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
 </div>
 
 <!-- TASK MODAL -->
-<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+<div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h2 id="modalTitle">새 업무 추가</h2>
     <input type="hidden" id="editId">
@@ -410,7 +410,7 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
 </div>
 
 <!-- KPI MODAL -->
-<div class="modal-overlay" id="kpiModalOverlay" onclick="if(event.target===this)closeKpiModal()">
+<div class="modal-overlay" id="kpiModalOverlay">
   <div class="modal">
     <h2 id="kpiModalTitle">KPI 추가</h2>
     <input type="hidden" id="kpiEditId">
@@ -434,7 +434,7 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
 </div>
 
 <!-- GUIDE -->
-<div class="modal-overlay" id="guideOverlay" onclick="if(event.target===this)this.classList.remove('active')">
+<div class="modal-overlay" id="guideOverlay">
   <div class="modal" style="max-width:480px;">
     <h2>사용 가이드</h2>
     <div style="background:var(--primary-light);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:12px;color:var(--primary);font-weight:500;">
@@ -486,6 +486,16 @@ const sampleCards=[
   {title:'D브랜드 예산 소진 현황 보고',brand:'D브랜드',type:'budget',priority:'urgent',due:'2026-03-19',note:'소진율 95% 초과 — 추가 예산 논의 필요',column:'today'},
   {title:'B브랜드 콘텐츠 컨펌 대기',brand:'B브랜드',type:'seeding',priority:'normal',due:'2026-03-21',note:'광고주 최종 컨펌 대기',column:'waiting'},
 ];
+
+// Safe overlay close: only close if both mousedown AND mouseup happened on the overlay itself
+function setupOverlayClose(overlayId,closeFn){
+  const el=document.getElementById(overlayId);let downOnOverlay=false;
+  el.addEventListener('mousedown',e=>{downOnOverlay=e.target===el;});
+  el.addEventListener('click',e=>{if(e.target===el&&downOnOverlay)closeFn();downOnOverlay=false;});
+}
+setupOverlayClose('modalOverlay',()=>closeModal());
+setupOverlayClose('kpiModalOverlay',()=>closeKpiModal());
+setupOverlayClose('guideOverlay',()=>document.getElementById('guideOverlay').classList.remove('active'));
 
 function toggleSidebar(){
   document.querySelector('.sidebar').classList.toggle('open');

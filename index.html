@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>업무 대시보드</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#f5f5f5;--sidebar-bg:#ffffff;--card:#fff;
+  --primary:#222222;--primary-light:#f0f0f0;--primary-dark:#111111;
+  --accent:#555555;--accent-light:#f5f5f5;
+  --success:#2d2d2d;--success-light:#f0f0f0;
+  --warning:#e5a742;--warning-light:#fdf5e6;
+  --danger:#d45555;--danger-light:#fceaea;
+  --text:#1a1a1a;--text-mid:#666666;--text-light:#999999;
+  --border:#e5e5e5;--border-light:#eeeeee;
+  --viral:#333333;--seeding:#666666;--budget:#444444;--comm:#e5a742;
+  --sidebar-w:220px;
+}
+body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px;letter-spacing:-.01em;}
+
+/* Sidebar */
+.sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;padding:20px 0;}
+.sidebar-brand{padding:0 20px 24px;font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px;}
+.sidebar-brand .brand-icon{width:28px;height:28px;background:#1a1a1a;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.sidebar-brand .brand-icon svg{width:14px;height:14px;}
+.sidebar nav{display:flex;flex-direction:column;gap:2px;padding:0 10px;flex:1;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:none;background:transparent;cursor:pointer;font-size:14px;color:var(--text-mid);font-weight:500;transition:all .15s;text-align:left;width:100%;font-family:inherit;}
+.nav-item:hover{background:var(--primary-light);color:var(--text);}
+.nav-item.active{background:#f0f0f0;color:#1a1a1a;font-weight:600;}
+.nav-item svg{width:18px;height:18px;flex-shrink:0;}
+.nav-item.active svg{color:#1a1a1a;}
+.sidebar-footer{padding:10px 10px 0;border-top:1px solid var(--border);margin-top:auto;}
+
+/* Main */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;}
+
+/* Top bar */
+.topbar{background:var(--card);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
+.topbar-left{display:flex;align-items:center;gap:16px;}
+.topbar h1{font-size:18px;font-weight:700;color:var(--text);}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+.select-wrap{position:relative;}
+.select-wrap select{appearance:none;padding:7px 30px 7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:var(--card);color:var(--text);font-family:inherit;cursor:pointer;}
+.select-wrap select:focus{outline:none;border-color:var(--primary);}
+.btn{padding:7px 14px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:5px;font-family:inherit;}
+.btn-primary{background:#1a1a1a;color:#fff;}
+.btn-primary:hover{background:#333;}
+.btn-outline{background:transparent;color:var(--text-mid);border:1px solid var(--border);}
+.btn-outline:hover{background:var(--bg);border-color:var(--text-light);}
+.btn-icon{padding:7px 8px;}
+
+/* Pages */
+.page{display:none;padding:24px 28px;flex:1;overflow-y:auto;}
+.page.active{display:block;}
+
+/* Kanban */
+.kanban-board{display:flex;gap:14px;overflow-x:auto;align-items:flex-start;padding-bottom:20px;}
+.kanban-col{min-width:260px;max-width:280px;flex:1;background:var(--bg);border-radius:10px;border:1px solid var(--border-light);}
+.kanban-col-header{padding:14px 14px 10px;display:flex;align-items:center;justify-content:space-between;}
+.col-label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text);}
+.col-dot{width:8px;height:8px;border-radius:50%;}
+.dot-backlog{background:#bbb;}
+.dot-progress{background:#2980b9;}
+.dot-today{background:#e67e22;}
+.dot-waiting{background:#8e44ad;}
+.dot-done{background:#27ae60;}
+.col-count{font-size:11px;font-weight:600;color:var(--text-light);background:var(--card);border:1px solid var(--border);border-radius:5px;padding:1px 7px;}
+.kanban-col-body{padding:6px 8px 8px;min-height:60px;max-height:calc(100vh - 200px);overflow-y:auto;}
+
+.k-card{background:var(--card);border-radius:8px;padding:14px;margin-bottom:6px;cursor:grab;transition:all .12s;border:1px solid var(--border-light);position:relative;}
+.k-card:hover{box-shadow:0 2px 8px rgba(91,106,191,.08);border-color:var(--border);}
+.k-card.dragging{opacity:.35;}
+.k-card-title{font-size:13px;font-weight:600;line-height:1.45;color:var(--text);margin-bottom:10px;padding-right:12px;}
+.k-card-meta{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.tag{display:inline-flex;align-items:center;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;letter-spacing:.2px;}
+.tag-viral{background:#fff3e0;color:#e67e22;}
+.tag-seeding{background:#f3e5f5;color:#8e44ad;}
+.tag-budget{background:#e8f5e9;color:#27ae60;}
+.tag-comm{background:#e3f2fd;color:#2980b9;}
+.tag-general{background:#f0f0f0;color:#666;}
+.k-card-bottom{display:flex;align-items:center;justify-content:space-between;}
+.k-card-brand{font-size:11px;color:var(--text-light);}
+.k-card-due{font-size:11px;color:var(--text-light);}
+.k-card-due.overdue{color:var(--danger);font-weight:600;}
+.k-card-due.soon{color:var(--warning);font-weight:600;}
+.k-prio{position:absolute;top:14px;right:12px;width:7px;height:7px;border-radius:50%;}
+.k-prio-urgent{background:var(--danger);}
+.k-prio-high{background:var(--warning);}
+.k-prio-normal{background:var(--border);}
+.k-prio-low{background:var(--border-light);}
+.k-card-actions{display:none;position:absolute;top:10px;right:10px;}
+.k-card:hover .k-card-actions{display:flex;}
+.k-card:hover .k-prio{display:none;}
+.k-card-actions button{background:var(--bg);border:1px solid var(--border);border-radius:5px;width:24px;height:24px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--text-mid);}
+.drop-zone{border:2px dashed #ccc;border-radius:8px;min-height:36px;margin:4px;background:#f5f5f5;opacity:.5;}
+
+/* Calendar */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cal-header h2{font-size:16px;font-weight:700;}
+.cal-nav{display:flex;gap:6px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden;}
+.cal-day-header{background:var(--card);padding:10px;text-align:center;font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;}
+.cal-day{background:var(--card);min-height:96px;padding:8px;position:relative;}
+.cal-day.today{background:#f7f7f7;}
+.cal-day.other{background:var(--bg);opacity:.5;}
+.cal-date{font-size:11px;font-weight:600;margin-bottom:4px;color:var(--text-mid);}
+.cal-day.today .cal-date{background:#1a1a1a;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;}
+.cal-event{font-size:10px;padding:2px 6px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-weight:500;}
+.cal-event:hover{opacity:.75;}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+.stat-card{background:var(--card);border-radius:10px;padding:18px;border:1px solid var(--border-light);}
+.stat-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+.stat-icon svg{width:18px;height:18px;}
+.stat-value{font-size:26px;font-weight:800;color:var(--text);}
+.stat-label{font-size:11px;color:var(--text-light);margin-top:2px;font-weight:500;}
+.stat-change{font-size:11px;margin-top:3px;font-weight:600;}
+.stat-change.positive{color:var(--success);}
+
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+@media(max-width:900px){.chart-row{grid-template-columns:1fr;}}
+.chart-card{background:var(--card);border-radius:10px;padding:20px;border:1px solid var(--border-light);}
+.chart-card h3{font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text);}
+
+.progress-row{margin-bottom:10px;}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--text-mid);}
+.progress-label strong{color:var(--text);}
+.progress-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s;}
+
+.brand-list{display:flex;flex-direction:column;gap:10px;}
+.brand-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:var(--bg);}
+.brand-avatar{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;}
+.brand-info{flex:1;}
+.brand-info .name{font-size:12px;font-weight:600;}
+.brand-info .tasks{font-size:11px;color:var(--text-light);}
+.brand-progress{width:80px;}
+
+/* Weekly */
+.week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+@media(max-width:900px){.week-grid{grid-template-columns:repeat(2,1fr);}}
+.week-col{background:var(--card);border-radius:10px;border:1px solid var(--border-light);min-height:280px;}
+.week-col-header{padding:12px 14px;border-bottom:1px solid var(--border-light);font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:var(--text-mid);}
+.week-col-header.is-today{background:#f0f0f0;color:#1a1a1a;}
+.week-col-body{padding:8px;}
+.week-task{padding:8px 10px;border-radius:6px;margin-bottom:5px;font-size:11px;border-left:3px solid var(--border);background:var(--bg);cursor:pointer;transition:background .1s;}
+.week-task:hover{background:#eee;}
+.week-task .wt-title{font-weight:600;color:var(--text);margin-bottom:2px;}
+.week-task .wt-brand{font-size:10px;color:var(--text-light);}
+.week-task.wt-viral{border-left-color:#e67e22;}
+.week-task.wt-seeding{border-left-color:#8e44ad;}
+.week-task.wt-budget{border-left-color:#27ae60;}
+.week-task.wt-comm{border-left-color:#2980b9;}
+.task-count{font-size:11px;padding:2px 7px;border-radius:10px;background:var(--bg);color:var(--text-light);font-weight:600;}
+
+/* KPI */
+.kpi-card{background:var(--card);border-radius:10px;padding:18px 20px;border:1px solid var(--border-light);margin-bottom:10px;cursor:pointer;transition:all .12s;}
+.kpi-card:hover{box-shadow:0 2px 8px rgba(91,106,191,.06);border-color:var(--border);}
+.kpi-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.kpi-header h3{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text);}
+.kpi-pct{font-size:18px;font-weight:800;}
+.kpi-status{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:700;}
+.kpi-achieved{background:#e8f5e9;color:#27ae60;}
+.kpi-ontrack{background:#e3f2fd;color:#2980b9;}
+.kpi-behind{background:#fff3e0;color:#e67e22;}
+.kpi-atrisk{background:#fceaea;color:#d45555;}
+.kpi-values{display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text-light);}
+.kpi-values strong{color:var(--text);}
+.kpi-note{font-size:11px;color:var(--text-light);margin-top:6px;font-style:italic;}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(44,44,58,.35);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.modal-overlay.active{display:flex;}
+.modal{background:var(--card);border-radius:14px;padding:28px;width:440px;max-width:92vw;max-height:85vh;overflow-y:auto;border:1px solid var(--border);}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:18px;color:var(--text);}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11px;font-weight:600;color:var(--text-light);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:var(--card);}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#1a1a1a;box-shadow:0 0 0 3px rgba(0,0,0,.05);}
+.form-group textarea{resize:vertical;min-height:56px;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;padding:10px 18px;border-radius:8px;font-size:12px;opacity:0;transition:opacity .25s;z-index:300;pointer-events:none;font-weight:500;}
+.toast.show{opacity:1;}
+
+/* SVG icon helper */
+.icon{display:inline-flex;align-items:center;justify-content:center;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    </div>
+    Dashboard
+  </div>
+  <nav>
+    <button class="nav-item active" data-page="kanban" onclick="showPage('kanban')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      칸반 보드
+    </button>
+    <button class="nav-item" data-page="calendar" onclick="showPage('calendar')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      캘린더
+    </button>
+    <button class="nav-item" data-page="progress" onclick="showPage('progress')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      진행률
+    </button>
+    <button class="nav-item" data-page="weekly" onclick="showPage('weekly')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      주간 플래너
+    </button>
+    <button class="nav-item" data-page="kpi" onclick="showPage('kpi')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      KPI 목표
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="nav-item" onclick="toggleGuide()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+      사용 가이드
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 id="pageTitle">칸반 보드</h1>
+    </div>
+    <div class="topbar-actions">
+      <div class="select-wrap">
+        <select id="filterBrand" onchange="renderAll()"><option value="all">모든 광고주</option></select>
+      </div>
+      <div class="select-wrap">
+        <select id="filterType" onchange="renderAll()">
+          <option value="all">모든 업무</option>
+          <option value="viral">바이럴</option>
+          <option value="seeding">인플루언서 시딩</option>
+          <option value="budget">예산 관리</option>
+          <option value="comm">커뮤니케이션</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="openAddModal()">+ 새 업무</button>
+      <button class="btn btn-outline btn-icon" onclick="exportData()" title="저장">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+      </button>
+      <button class="btn btn-outline btn-icon" onclick="importData()" title="불러오기">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- KANBAN -->
+  <div class="page active" id="page-kanban">
+    <div class="kanban-board" id="kanbanBoard"></div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="page" id="page-calendar">
+    <div class="cal-header">
+      <h2 id="calMonthTitle"></h2>
+      <div class="cal-nav">
+        <button class="btn btn-outline" onclick="calNav(-1)">&larr; 이전</button>
+        <button class="btn btn-outline" onclick="calNav(0)">오늘</button>
+        <button class="btn btn-outline" onclick="calNav(1)">다음 &rarr;</button>
+      </div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="page" id="page-progress">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="chart-row">
+      <div class="chart-card"><h3>업무 유형별 진행률</h3><div id="typeProgress"></div></div>
+      <div class="chart-card"><h3>광고주별 현황</h3><div class="brand-list" id="brandProgress"></div></div>
+    </div>
+    <div class="chart-card"><h3>최근 7일 완료 추이</h3><div id="weeklyChart" style="display:flex;align-items:flex-end;gap:6px;height:100px;padding-top:8px;"></div></div>
+  </div>
+
+  <!-- WEEKLY -->
+  <div class="page" id="page-weekly">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h2 id="weekTitle" style="font-size:16px;font-weight:700;"></h2>
+      <span style="font-size:12px;color:var(--text-light);">하루 최대 3개 업무에 집중</span>
+    </div>
+    <div class="week-grid" id="weekGrid"></div>
+  </div>
+
+  <!-- KPI -->
+  <div class="page" id="page-kpi">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <h2 style="font-size:16px;font-weight:700;" id="kpiMonthTitle"></h2>
+        <p style="font-size:11px;color:var(--text-light);margin-top:3px;" id="kpiDaysLeft"></p>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-outline" onclick="kpiNav(-1)">&larr; 이전 달</button>
+        <button class="btn btn-outline" onclick="kpiNav(0)">이번 달</button>
+        <button class="btn btn-outline" onclick="kpiNav(1)">다음 달 &rarr;</button>
+        <button class="btn btn-primary" onclick="openKpiModal()">+ KPI 추가</button>
+      </div>
+    </div>
+    <div class="stats-grid" style="margin-bottom:16px;" id="kpiSummary"></div>
+    <div id="kpiList"></div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modalTitle">새 업무 추가</h2>
+    <input type="hidden" id="editId">
+    <div class="form-group"><label>업무 제목</label><input type="text" id="inputTitle" placeholder="A브랜드 3월 바이럴 콘텐츠 기획"></div>
+    <div class="form-group"><label>광고주</label><input type="text" id="inputBrand" placeholder="A브랜드" list="brandDL"><datalist id="brandDL"></datalist></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>업무 유형</label><select id="inputType"><option value="viral">바이럴</option><option value="seeding">인플루언서 시딩</option><option value="budget">예산 관리</option><option value="comm">커뮤니케이션</option></select></div>
+      <div class="form-group"><label>우선순위</label><select id="inputPriority"><option value="normal">보통</option><option value="urgent">긴급</option><option value="high">높음</option><option value="low">낮음</option></select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>마감일</label><input type="date" id="inputDue"></div>
+      <div class="form-group"><label>컬럼</label><select id="inputColumn"><option value="backlog">백로그</option><option value="progress">진행중</option><option value="today">오늘 집중</option><option value="waiting">컨펌 대기</option><option value="done">완료</option></select></div>
+    </div>
+    <div class="form-group"><label>메모</label><textarea id="inputNote" placeholder="상세 내용, 참고 사항"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">취소</button>
+      <button class="btn" id="btnDelete" style="display:none;background:var(--danger);color:#fff;" onclick="deleteCard()">삭제</button>
+      <button class="btn btn-primary" onclick="saveCard()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- KPI MODAL -->
+<div class="modal-overlay" id="kpiModalOverlay" onclick="if(event.target===this)closeKpiModal()">
+  <div class="modal">
+    <h2 id="kpiModalTitle">KPI 추가</h2>
+    <input type="hidden" id="kpiEditId">
+    <div class="form-group"><label>KPI 항목</label><input type="text" id="kpiName" placeholder="바이럴 콘텐츠 발행 건수"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>카테고리</label><select id="kpiCategory"><option value="viral">바이럴</option><option value="seeding">인플루언서 시딩</option><option value="budget">예산 관리</option><option value="comm">커뮤니케이션</option><option value="general">일반</option></select></div>
+      <div class="form-group"><label>단위</label><input type="text" id="kpiUnit" placeholder="건, %, 개"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>목표</label><input type="number" id="kpiTarget" placeholder="10"></div>
+      <div class="form-group"><label>현재 달성</label><input type="number" id="kpiCurrent" value="0"></div>
+    </div>
+    <div class="form-group"><label>대상 월</label><input type="month" id="kpiMonth"></div>
+    <div class="form-group"><label>메모</label><textarea id="kpiNote" placeholder="달성 전략, 참고 사항"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeKpiModal()">취소</button>
+      <button class="btn" id="btnKpiDelete" style="display:none;background:var(--danger);color:#fff;" onclick="deleteKpi()">삭제</button>
+      <button class="btn btn-primary" onclick="saveKpi()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- GUIDE -->
+<div class="modal-overlay" id="guideOverlay" onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="modal" style="max-width:480px;">
+    <h2>사용 가이드</h2>
+    <div style="background:var(--primary-light);padding:12px 14px;border-radius:8px;margin-bottom:14px;font-size:12px;color:var(--primary);font-weight:500;">
+      핵심 규칙 — "오늘 집중" 컬럼은 최대 3개까지만 허용됩니다.
+    </div>
+    <div style="font-size:12px;line-height:1.8;color:var(--text-mid);">
+      <p><strong style="color:var(--text);">칸반 보드</strong> — 드래그앤드롭으로 카드를 옮기세요. 클릭하면 수정할 수 있어요.</p>
+      <p><strong style="color:var(--text);">캘린더</strong> — 마감일이 있는 업무가 달력에 표시됩니다.</p>
+      <p><strong style="color:var(--text);">진행률</strong> — 광고주별, 유형별 진행 현황을 한눈에 볼 수 있어요.</p>
+      <p><strong style="color:var(--text);">주간 플래너</strong> — 이번 주 월~금 마감 업무를 정리하는 공간입니다.</p>
+      <p><strong style="color:var(--text);">KPI 목표</strong> — 월간 KPI를 설정하고 달성률을 추적합니다. 진행 바의 세로선은 예상 진행률입니다.</p>
+      <hr style="margin:12px 0;border:none;border-top:1px solid var(--border);">
+      <p><strong style="color:var(--text);">매일 아침</strong> — "진행중"에서 오늘 집중할 3개를 "오늘 집중"으로 옮기세요.</p>
+      <p><strong style="color:var(--text);">매주 월요일</strong> — "백로그"를 훑어보며 이번 주 할 것들을 "진행중"으로 옮기세요.</p>
+      <p><strong style="color:var(--text);">저장/불러오기</strong> — 상단 아이콘으로 JSON 백업 및 복원이 가능합니다.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let cards=[], nextId=1, calYear, calMonth;
+let kpis=[], nextKpiId=1, kpiYear, kpiMonth;
+
+const sampleKpis=[
+  {name:'바이럴 콘텐츠 발행',category:'viral',unit:'건',target:12,current:5,month:'2026-03',note:'광고주별 월 2~3건 목표'},
+  {name:'인플루언서 시딩 완료',category:'seeding',unit:'건',target:8,current:3,month:'2026-03',note:'컨셉 선정 → 가이드 → 영상 컨펌까지'},
+  {name:'광고주 월간 보고 완료',category:'comm',unit:'건',target:5,current:1,month:'2026-03',note:'5개 광고주 각 1회'},
+  {name:'견적서 검토 완료',category:'budget',unit:'건',target:4,current:2,month:'2026-03',note:'실행사별 월간 견적서'},
+  {name:'콘텐츠 기획안 제출',category:'viral',unit:'건',target:6,current:4,month:'2026-03',note:'각 브랜드별 기획안'},
+  {name:'실행사 응답 시간',category:'comm',unit:'시간 이내',target:24,current:18,month:'2026-03',note:'평균 응답 시간 24시간 이내 유지'},
+  {name:'주간 미팅 준비 완료율',category:'general',unit:'%',target:100,current:75,month:'2026-03',note:'미팅 전날까지 자료 준비'},
+];
+
+const sampleCards=[
+  {title:'A브랜드 3월 바이럴 콘텐츠 기획안 작성',brand:'A브랜드',type:'viral',priority:'high',due:'2026-03-21',note:'실행사에 전달할 기획안',column:'progress'},
+  {title:'B브랜드 인플루언서 영상 최종 컨펌',brand:'B브랜드',type:'seeding',priority:'urgent',due:'2026-03-19',note:'수정본 확인 후 광고주에게 전달',column:'today'},
+  {title:'C브랜드 4월 예산안 정리',brand:'C브랜드',type:'budget',priority:'normal',due:'2026-03-28',note:'제품별/광고별 예산 분배표',column:'progress'},
+  {title:'실행사 D 3월 견적서 확인',brand:'공통',type:'budget',priority:'high',due:'2026-03-25',note:'세부 항목 대조 필요',column:'backlog'},
+  {title:'A브랜드 시딩 가이드라인 컨펌',brand:'A브랜드',type:'seeding',priority:'normal',due:'2026-03-22',note:'광고주 피드백 대기 중',column:'waiting'},
+  {title:'주간 미팅 자료 준비',brand:'공통',type:'comm',priority:'normal',due:'2026-03-20',note:'각 광고주별 진행현황 정리',column:'today'},
+  {title:'E브랜드 부킹 일정 조율',brand:'E브랜드',type:'viral',priority:'normal',due:'2026-03-26',note:'실행사와 일정 협의',column:'backlog'},
+  {title:'B브랜드 2월 결산 보고',brand:'B브랜드',type:'budget',priority:'low',due:'2026-03-15',note:'',column:'done'},
+  {title:'D브랜드 바이럴 소재 검수',brand:'D브랜드',type:'viral',priority:'high',due:'2026-03-20',note:'3종 소재 최종 확인',column:'progress'},
+  {title:'C브랜드 인플루언서 컨셉 선정',brand:'C브랜드',type:'seeding',priority:'normal',due:'2026-03-24',note:'3개 안 중 택 1',column:'backlog'},
+  {title:'A브랜드 광고주 월간 보고 미팅',brand:'A브랜드',type:'comm',priority:'high',due:'2026-03-27',note:'3월 성과 리포트 준비',column:'backlog'},
+  {title:'E브랜드 시딩 영상 가이드 작성',brand:'E브랜드',type:'seeding',priority:'normal',due:'2026-03-29',note:'',column:'backlog'},
+  {title:'D브랜드 예산 소진 현황 보고',brand:'D브랜드',type:'budget',priority:'urgent',due:'2026-03-19',note:'소진율 95% 초과 — 추가 예산 논의 필요',column:'today'},
+  {title:'B브랜드 콘텐츠 컨펌 대기',brand:'B브랜드',type:'seeding',priority:'normal',due:'2026-03-21',note:'광고주 최종 컨펌 대기',column:'waiting'},
+];
+
+function init(){
+  sampleCards.forEach(c=>cards.push({id:nextId++,...c}));
+  sampleKpis.forEach(k=>kpis.push({id:nextKpiId++,...k}));
+  const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();kpiYear=n.getFullYear();kpiMonth=n.getMonth();
+  renderAll();
+}
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
+  const t={kanban:'칸반 보드',calendar:'캘린더',progress:'진행률',weekly:'주간 플래너',kpi:'KPI 목표'};
+  document.getElementById('pageTitle').textContent=t[name]||'';
+  renderAll();
+}
+
+function renderAll(){updateBrandFilter();renderKanban();renderCalendar();renderProgress();renderWeekly();renderKpi();}
+
+function getFiltered(){
+  const fb=document.getElementById('filterBrand').value,ft=document.getElementById('filterType').value;
+  return cards.filter(c=>{if(fb!=='all'&&c.brand!==fb)return false;if(ft!=='all'&&c.type!==ft)return false;return true;});
+}
+
+function updateBrandFilter(){
+  const brands=[...new Set(cards.map(c=>c.brand).filter(Boolean))].sort();
+  const sel=document.getElementById('filterBrand'),cur=sel.value;
+  sel.innerHTML='<option value="all">모든 광고주</option>';
+  brands.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o);});
+  sel.value=cur;
+  const dl=document.getElementById('brandDL');dl.innerHTML='';
+  brands.forEach(b=>{const o=document.createElement('option');o.value=b;dl.appendChild(o);});
+}
+
+// KANBAN
+const colDefs=[{id:'backlog',label:'Backlog',dot:'dot-backlog'},{id:'progress',label:'Inprogress',dot:'dot-progress'},{id:'today',label:'Today',dot:'dot-today'},{id:'waiting',label:'Onhold',dot:'dot-waiting'},{id:'done',label:'Done',dot:'dot-done'}];
+const pOrder={urgent:0,high:1,normal:2,low:3};
+
+function renderKanban(){
+  const board=document.getElementById('kanbanBoard');board.innerHTML='';
+  const filtered=getFiltered();
+  colDefs.forEach(col=>{
+    const el=document.createElement('div');el.className='kanban-col';
+    const colCards=filtered.filter(c=>c.column===col.id).sort((a,b)=>(pOrder[a.priority]||2)-(pOrder[b.priority]||2));
+    const allCount=cards.filter(c=>c.column===col.id).length;
+    el.innerHTML=`<div class="kanban-col-header"><span class="col-label"><span class="col-dot ${col.dot}"></span>${col.label}</span><span class="col-count">${allCount}</span></div>`;
+    const body=document.createElement('div');body.className='kanban-col-body';body.dataset.column=col.id;
+    colCards.forEach(card=>body.appendChild(createCard(card)));
+    setupDrop(body,col.id);el.appendChild(body);board.appendChild(el);
+  });
+}
+
+function createCard(card){
+  const div=document.createElement('div');div.className='k-card';div.draggable=true;div.dataset.id=card.id;
+  const tl={viral:'바이럴',seeding:'시딩',budget:'예산',comm:'소통'};
+  const pc={urgent:'k-prio-urgent',high:'k-prio-high',normal:'k-prio-normal',low:'k-prio-low'};
+  let dueHtml='';
+  if(card.due){
+    const today=new Date();today.setHours(0,0,0,0);const d=new Date(card.due+'T00:00:00');
+    const diff=Math.ceil((d-today)/864e5);
+    const cls=diff<0?'overdue':diff<=1?'soon':'';
+    const txt=diff<0?`${Math.abs(diff)}일 지남`:diff===0?'오늘 마감':diff===1?'내일 마감':`D-${diff}`;
+    dueHtml=`<span class="k-card-due ${cls}">${txt}</span>`;
+  }
+  div.innerHTML=`
+    <div class="k-card-actions"><button onclick="event.stopPropagation();openEditModal(${card.id})"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div>
+    <div class="k-prio ${pc[card.priority]||''}"></div>
+    <div class="k-card-title">${card.title}</div>
+    <div class="k-card-meta"><span class="tag tag-${card.type}">${tl[card.type]||card.type}</span></div>
+    <div class="k-card-bottom"><span class="k-card-brand">${card.brand||''}</span>${dueHtml}</div>`;
+  div.addEventListener('click',()=>openEditModal(card.id));
+  div.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',card.id);div.classList.add('dragging');});
+  div.addEventListener('dragend',()=>div.classList.remove('dragging'));
+  return div;
+}
+
+function setupDrop(body,colId){
+  body.addEventListener('dragover',e=>{e.preventDefault();if(!body.querySelector('.drop-zone')){const dz=document.createElement('div');dz.className='drop-zone';body.appendChild(dz);}});
+  body.addEventListener('dragleave',e=>{if(!body.contains(e.relatedTarget)){const dz=body.querySelector('.drop-zone');if(dz)dz.remove();}});
+  body.addEventListener('drop',e=>{
+    e.preventDefault();const dz=body.querySelector('.drop-zone');if(dz)dz.remove();
+    const id=parseInt(e.dataTransfer.getData('text/plain'));
+    if(colId==='today'&&cards.filter(c=>c.column==='today'&&c.id!==id).length>=3){showToast('오늘 집중은 최대 3개까지');return;}
+    const card=cards.find(c=>c.id===id);if(card){card.column=colId;renderAll();}
+  });
+}
+
+// CALENDAR
+function renderCalendar(){
+  const ms=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('calMonthTitle').textContent=`${calYear}년 ${ms[calMonth]}`;
+  const grid=document.getElementById('calGrid');grid.innerHTML='';
+  ['일','월','화','수','목','금','토'].forEach(d=>{const h=document.createElement('div');h.className='cal-day-header';h.textContent=d;grid.appendChild(h);});
+  const first=new Date(calYear,calMonth,1).getDay(),dim=new Date(calYear,calMonth+1,0).getDate(),prevDim=new Date(calYear,calMonth,0).getDate();
+  const today=new Date();today.setHours(0,0,0,0);
+  const tc={viral:'tag-viral',seeding:'tag-seeding',budget:'tag-budget',comm:'tag-comm'};
+  const filtered=getFiltered();
+  for(let i=0;i<42;i++){
+    const cell=document.createElement('div');cell.className='cal-day';
+    let date,month=calMonth,year=calYear;
+    if(i<first){date=prevDim-first+i+1;month--;cell.classList.add('other');}
+    else if(i>=first+dim){date=i-first-dim+1;month++;cell.classList.add('other');}
+    else{date=i-first+1;}
+    if(month<0){month=11;year--;}else if(month>11){month=0;year++;}
+    const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
+    if(new Date(ds+'T00:00:00').getTime()===today.getTime())cell.classList.add('today');
+    const de=document.createElement('div');de.className='cal-date';de.textContent=date;cell.appendChild(de);
+    const dc=filtered.filter(c=>c.due===ds);
+    dc.slice(0,3).forEach(c=>{const ev=document.createElement('div');ev.className=`cal-event tag-${c.type}`;ev.textContent=c.title;ev.onclick=()=>openEditModal(c.id);cell.appendChild(ev);});
+    if(dc.length>3){const m=document.createElement('div');m.style.cssText='font-size:10px;color:var(--text-light);padding-left:4px;';m.textContent=`+${dc.length-3}`;cell.appendChild(m);}
+    grid.appendChild(cell);if(i>=first+dim+6)break;
+  }
+}
+function calNav(d){if(d===0){const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();}else{calMonth+=d;if(calMonth<0){calMonth=11;calYear--;}else if(calMonth>11){calMonth=0;calYear++;}}renderCalendar();}
+
+// PROGRESS
+function renderProgress(){
+  const all=cards.length,done=cards.filter(c=>c.column==='done').length;
+  const inP=cards.filter(c=>c.column==='today'||c.column==='progress').length;
+  const wait=cards.filter(c=>c.column==='waiting').length;
+  const urg=cards.filter(c=>c.priority==='urgent'&&c.column!=='done').length;
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="stat-card"><div class="stat-icon" style="background:var(--primary-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--primary)" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg></div><div class="stat-value">${all}</div><div class="stat-label">전체 업무</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:var(--success-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--success)" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg></div><div class="stat-value">${done}</div><div class="stat-label">완료</div><div class="stat-change positive">${all?Math.round(done/all*100):0}% 달성</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:var(--warning-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--warning)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div class="stat-value">${wait}</div><div class="stat-label">컨펌 대기</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:var(--danger-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--danger)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-value">${urg}</div><div class="stat-label">긴급 업무</div></div>`;
+
+  const types=[{id:'viral',label:'바이럴',color:'var(--viral)'},{id:'seeding',label:'인플루언서 시딩',color:'var(--seeding)'},{id:'budget',label:'예산 관리',color:'var(--budget)'},{id:'comm',label:'커뮤니케이션',color:'var(--comm)'}];
+  let tp='';types.forEach(t=>{const tot=cards.filter(c=>c.type===t.id).length,td=cards.filter(c=>c.type===t.id&&c.column==='done').length,pct=tot?Math.round(td/tot*100):0;
+    tp+=`<div class="progress-row"><div class="progress-label"><span>${t.label}</span><strong>${td}/${tot} (${pct}%)</strong></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${t.color}"></div></div></div>`;
+  });document.getElementById('typeProgress').innerHTML=tp;
+
+  const brands=[...new Set(cards.map(c=>c.brand).filter(Boolean))].sort();
+  const colors=['#5b6abf','#7c6dd8','#4caf7d','#e5a742','#d45555','#5eadb0','#8b6cc1'];
+  let bp='';brands.forEach((b,i)=>{const tot=cards.filter(c=>c.brand===b).length,bd=cards.filter(c=>c.brand===b&&c.column==='done').length,pct=tot?Math.round(bd/tot*100):0;
+    bp+=`<div class="brand-row"><div class="brand-avatar" style="background:${colors[i%7]}">${b.charAt(0)}</div><div class="brand-info"><div class="name">${b}</div><div class="tasks">${tot}개 업무 · ${bd}개 완료</div></div><div class="brand-progress"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${colors[i%7]}"></div></div></div></div>`;
+  });document.getElementById('brandProgress').innerHTML=bp;
+
+  const days=['월','화','수','목','금','토','일'],vals=[2,1,3,0,1,0,0],mx=Math.max(...vals,1);
+  let ch='';days.forEach((d,i)=>{const h=Math.max((vals[i]/mx)*70,3);
+    ch+=`<div style="flex:1;text-align:center;"><div style="height:${h}px;background:${i<5?'var(--primary)':'var(--border)'};border-radius:3px 3px 0 0;margin:0 auto;width:60%;opacity:${i<5?.85:.35};"></div><div style="font-size:10px;color:var(--text-light);margin-top:4px;">${d}</div><div style="font-size:11px;font-weight:700;">${vals[i]}</div></div>`;
+  });document.getElementById('weeklyChart').innerHTML=ch;
+}
+
+// WEEKLY
+function renderWeekly(){
+  const today=new Date(),dow=today.getDay(),mon=new Date(today);
+  mon.setDate(today.getDate()-(dow===0?6:dow-1));
+  const fri=new Date(mon.getTime()+4*864e5);
+  document.getElementById('weekTitle').textContent=`${mon.getMonth()+1}/${mon.getDate()} — ${fri.getMonth()+1}/${fri.getDate()}`;
+  const grid=document.getElementById('weekGrid');grid.innerHTML='';
+  ['월','화','수','목','금'].forEach((dn,i)=>{
+    const d=new Date(mon);d.setDate(mon.getDate()+i);const ds=d.toISOString().slice(0,10);
+    const isT=d.toDateString()===today.toDateString();
+    const col=document.createElement('div');col.className='week-col';
+    const dc=cards.filter(c=>c.due===ds&&c.column!=='done');
+    col.innerHTML=`<div class="week-col-header ${isT?'is-today':''}"><span>${dn} ${d.getDate()}일</span><span class="task-count">${dc.length}</span></div>`;
+    const body=document.createElement('div');body.className='week-col-body';
+    dc.forEach(c=>{const t=document.createElement('div');t.className=`week-task wt-${c.type}`;t.innerHTML=`<div class="wt-title">${c.title}</div><div class="wt-brand">${c.brand||''}</div>`;t.onclick=()=>openEditModal(c.id);body.appendChild(t);});
+    if(!dc.length)body.innerHTML='<div style="text-align:center;padding:24px 8px;color:var(--text-light);font-size:11px;">없음</div>';
+    col.appendChild(body);grid.appendChild(col);
+  });
+}
+
+// KPI
+function renderKpi(){
+  const ms=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const mStr=`${kpiYear}-${String(kpiMonth+1).padStart(2,'0')}`;
+  document.getElementById('kpiMonthTitle').textContent=`${kpiYear}년 ${ms[kpiMonth]} KPI`;
+  const today=new Date(),dim=new Date(kpiYear,kpiMonth+1,0).getDate();
+  const dp=(kpiYear===today.getFullYear()&&kpiMonth===today.getMonth())?today.getDate():(today>new Date(kpiYear,kpiMonth+1,0)?dim:0);
+  const dl=Math.max(0,dim-dp);
+  document.getElementById('kpiDaysLeft').textContent=dl>0?`${dl}일 남음 · ${Math.round(dp/dim*100)}% 경과`:(dp>=dim?'종료된 달':'아직 시작 전');
+
+  const mk=kpis.filter(k=>k.month===mStr),total=mk.length;
+  const achieved=mk.filter(k=>k.current>=k.target).length;
+  const avg=total?Math.round(mk.reduce((s,k)=>s+Math.min(100,Math.round(k.current/k.target*100)),0)/total):0;
+  const risk=mk.filter(k=>{const p=k.target?k.current/k.target*100:0;return p<(dp/dim*100)*.7&&p<100;}).length;
+
+  document.getElementById('kpiSummary').innerHTML=`
+    <div class="stat-card"><div class="stat-icon" style="background:var(--primary-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--primary)" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><div class="stat-value">${total}</div><div class="stat-label">전체 KPI</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:var(--success-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--success)" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg></div><div class="stat-value">${achieved}/${total}</div><div class="stat-label">달성 완료</div><div class="stat-change positive">${total?Math.round(achieved/total*100):0}%</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:var(--accent-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--accent)" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><div class="stat-value">${avg}%</div><div class="stat-label">평균 달성률</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:var(--danger-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--danger)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-value">${risk}</div><div class="stat-label">위험 항목</div></div>`;
+
+  const cl={viral:'바이럴',seeding:'인플루언서 시딩',budget:'예산 관리',comm:'커뮤니케이션',general:'일반'};
+  let html='';
+  mk.forEach(k=>{
+    const pct=k.target?Math.min(100,Math.round(k.current/k.target*100)):0;
+    const exp=(dp/dim)*100;
+    let sc,sl;
+    if(pct>=100){sc='kpi-achieved';sl='달성';}
+    else if(pct>=exp*.8){sc='kpi-ontrack';sl='순조';}
+    else if(pct>=exp*.5){sc='kpi-behind';sl='지연';}
+    else{sc='kpi-atrisk';sl='위험';}
+    const bc=pct>=100?'var(--success)':pct>=exp*.8?'var(--primary)':pct>=exp*.5?'var(--warning)':'var(--danger)';
+
+    html+=`<div class="kpi-card" onclick="openKpiEditModal(${k.id})">
+      <div class="kpi-header"><h3><span class="tag tag-${k.category}">${cl[k.category]||k.category}</span>${k.name}</h3>
+      <div style="display:flex;align-items:center;gap:8px;"><span class="kpi-status ${sc}">${sl}</span><span class="kpi-pct" style="color:${bc}">${pct}%</span></div></div>
+      <div class="progress-row" style="margin-bottom:0;"><div class="progress-bar" style="height:8px;position:relative;">
+        <div class="progress-fill" style="width:${pct}%;background:${bc};"></div>
+        <div style="position:absolute;left:${Math.min(98,exp)}%;top:-1px;width:1.5px;height:10px;background:var(--text);opacity:.2;"></div>
+      </div></div>
+      <div class="kpi-values"><span>현재 <strong>${k.current}</strong> ${k.unit}</span><span>목표 <strong>${k.target}</strong> ${k.unit}</span><span>잔여 <strong>${Math.max(0,k.target-k.current)}</strong> ${k.unit}</span></div>
+      ${k.note?`<div class="kpi-note">${k.note}</div>`:''}
+    </div>`;
+  });
+
+  if(!mk.length) html='<div style="text-align:center;padding:48px 20px;color:var(--text-light);"><div style="font-size:13px;">이 달에 설정된 KPI가 없습니다.</div><div style="font-size:12px;margin-top:4px;">+ KPI 추가 버튼으로 목표를 설정해보세요.</div></div>';
+  document.getElementById('kpiList').innerHTML=html;
+}
+
+function kpiNav(d){if(d===0){const n=new Date();kpiYear=n.getFullYear();kpiMonth=n.getMonth();}else{kpiMonth+=d;if(kpiMonth<0){kpiMonth=11;kpiYear--;}else if(kpiMonth>11){kpiMonth=0;kpiYear++;}}renderKpi();}
+function openKpiModal(){document.getElementById('kpiModalTitle').textContent='KPI 추가';document.getElementById('kpiEditId').value='';document.getElementById('kpiName').value='';document.getElementById('kpiCategory').value='viral';document.getElementById('kpiUnit').value='건';document.getElementById('kpiTarget').value='';document.getElementById('kpiCurrent').value='0';document.getElementById('kpiMonth').value=`${kpiYear}-${String(kpiMonth+1).padStart(2,'0')}`;document.getElementById('kpiNote').value='';document.getElementById('btnKpiDelete').style.display='none';document.getElementById('kpiModalOverlay').classList.add('active');}
+function openKpiEditModal(id){const k=kpis.find(x=>x.id===id);if(!k)return;document.getElementById('kpiModalTitle').textContent='KPI 수정';document.getElementById('kpiEditId').value=id;document.getElementById('kpiName').value=k.name;document.getElementById('kpiCategory').value=k.category;document.getElementById('kpiUnit').value=k.unit;document.getElementById('kpiTarget').value=k.target;document.getElementById('kpiCurrent').value=k.current;document.getElementById('kpiMonth').value=k.month;document.getElementById('kpiNote').value=k.note||'';document.getElementById('btnKpiDelete').style.display='inline-block';document.getElementById('kpiModalOverlay').classList.add('active');}
+function closeKpiModal(){document.getElementById('kpiModalOverlay').classList.remove('active');}
+function saveKpi(){const name=document.getElementById('kpiName').value.trim(),target=parseInt(document.getElementById('kpiTarget').value);if(!name||isNaN(target)){showToast('KPI 항목과 목표를 입력해주세요');return;}const data={name,category:document.getElementById('kpiCategory').value,unit:document.getElementById('kpiUnit').value.trim()||'건',target,current:parseInt(document.getElementById('kpiCurrent').value)||0,month:document.getElementById('kpiMonth').value,note:document.getElementById('kpiNote').value.trim()};const eid=document.getElementById('kpiEditId').value;if(eid){const k=kpis.find(x=>x.id===parseInt(eid));if(k)Object.assign(k,data);}else{kpis.push({id:nextKpiId++,...data});}closeKpiModal();renderKpi();showToast('저장 완료');}
+function deleteKpi(){const eid=document.getElementById('kpiEditId').value;if(eid&&confirm('이 KPI를 삭제할까요?')){kpis=kpis.filter(k=>k.id!==parseInt(eid));closeKpiModal();renderKpi();showToast('삭제 완료');}}
+
+// MODALS
+function openAddModal(){document.getElementById('modalTitle').textContent='새 업무 추가';document.getElementById('editId').value='';document.getElementById('inputTitle').value='';document.getElementById('inputBrand').value='';document.getElementById('inputType').value='viral';document.getElementById('inputPriority').value='normal';document.getElementById('inputDue').value='';document.getElementById('inputNote').value='';document.getElementById('inputColumn').value='backlog';document.getElementById('btnDelete').style.display='none';document.getElementById('modalOverlay').classList.add('active');}
+function openEditModal(id){const card=cards.find(c=>c.id===id);if(!card)return;document.getElementById('modalTitle').textContent='업무 수정';document.getElementById('editId').value=id;document.getElementById('inputTitle').value=card.title;document.getElementById('inputBrand').value=card.brand;document.getElementById('inputType').value=card.type;document.getElementById('inputPriority').value=card.priority;document.getElementById('inputDue').value=card.due;document.getElementById('inputNote').value=card.note||'';document.getElementById('inputColumn').value=card.column;document.getElementById('btnDelete').style.display='inline-block';document.getElementById('modalOverlay').classList.add('active');}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('active');}
+function saveCard(){const title=document.getElementById('inputTitle').value.trim();if(!title){showToast('업무 제목을 입력해주세요');return;}const col=document.getElementById('inputColumn').value,eid=document.getElementById('editId').value;if(col==='today'&&!eid&&cards.filter(c=>c.column==='today').length>=3){showToast('오늘 집중은 최대 3개까지');return;}const data={title,brand:document.getElementById('inputBrand').value.trim(),type:document.getElementById('inputType').value,priority:document.getElementById('inputPriority').value,due:document.getElementById('inputDue').value,note:document.getElementById('inputNote').value.trim(),column:col};if(eid){const card=cards.find(c=>c.id===parseInt(eid));if(card)Object.assign(card,data);}else{cards.push({id:nextId++,...data});}closeModal();renderAll();showToast('저장 완료');}
+function deleteCard(){const eid=document.getElementById('editId').value;if(eid&&confirm('이 업무를 삭제할까요?')){cards=cards.filter(c=>c.id!==parseInt(eid));closeModal();renderAll();showToast('삭제 완료');}}
+
+// SAVE/LOAD
+function exportData(){const json=JSON.stringify({cards,nextId,kpis,nextKpiId},null,2);const blob=new Blob([json],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`dashboard_${new Date().toISOString().slice(0,10)}.json`;a.click();showToast('저장 파일 다운로드');}
+function importData(){const input=document.createElement('input');input.type='file';input.accept='.json';input.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.cards){cards=d.cards;nextId=d.nextId||cards.length+1;if(d.kpis){kpis=d.kpis;nextKpiId=d.nextKpiId||kpis.length+1;}renderAll();showToast('불러오기 완료');}}catch{showToast('파일 형식이 올바르지 않습니다');}};r.readAsText(f);};input.click();}
+function toggleGuide(){document.getElementById('guideOverlay').classList.toggle('active');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+init();
+</script>
+</body>
+</html>

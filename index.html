@@ -361,6 +361,7 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
           <option value="comm">커뮤니케이션</option>
         </select>
       </div>
+      <button class="btn btn-outline" id="btnFilterReset" style="display:none;font-size:11px;padding:5px 10px;color:var(--danger);" onclick="resetFilters()">초기화</button>
       <button class="btn btn-primary" onclick="openAddModal()">+ 새 업무</button>
       <button class="btn btn-outline btn-icon" onclick="exportData()" title="저장">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
@@ -643,7 +644,8 @@ function showPage(name){
   renderAll();
 }
 
-function renderAll(){updateBrandFilter();renderKanban();renderCalendar();renderProgress();renderWeekly();renderKpi();}
+function resetFilters(){document.getElementById('filterBrand').value='all';document.getElementById('filterType').value='all';renderAll();}
+function renderAll(){updateBrandFilter();renderKanban();renderCalendar();renderProgress();renderWeekly();renderKpi();const fb=document.getElementById('filterBrand').value,ft=document.getElementById('filterType').value;document.getElementById('btnFilterReset').style.display=(fb!=='all'||ft!=='all')?'inline-flex':'none';}
 
 function getFiltered(){
   const fb=document.getElementById('filterBrand').value,ft=document.getElementById('filterType').value;

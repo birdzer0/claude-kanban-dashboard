@@ -349,6 +349,7 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
       <h1 id="pageTitle">백세영 칸반 보드</h1>
     </div>
     <div class="topbar-actions">
+      <button id="btnFilterReset" style="display:none;background:none;border:none;cursor:pointer;padding:0 2px;color:#ccc;font-size:16px;line-height:1;" onclick="resetFilters()" title="필터 초기화">&times;</button>
       <div class="select-wrap">
         <select id="filterBrand" onchange="renderAll()"><option value="all">모든 광고주</option></select>
       </div>
@@ -361,7 +362,6 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
           <option value="comm">커뮤니케이션</option>
         </select>
       </div>
-      <button class="btn btn-outline" id="btnFilterReset" style="display:none;font-size:11px;padding:5px 10px;color:var(--danger);" onclick="resetFilters()">초기화</button>
       <button class="btn btn-primary" onclick="openAddModal()">+ 새 업무</button>
       <button class="btn btn-outline btn-icon" onclick="exportData()" title="저장">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>

@@ -286,6 +286,19 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
 .perm-add-row select{width:100px;}
 .perm-note{font-size:11px;color:var(--text-light);margin-top:12px;}
 
+/* Master data */
+.master-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0;}
+.master-tab{padding:8px 14px;font-size:12px;font-weight:600;color:var(--text-light);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit;}
+.master-tab.active{color:var(--text);border-bottom-color:var(--text);}
+.master-list{list-style:none;padding:0;margin:0;}
+.master-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border-light);font-size:13px;}
+.master-item:last-child{border-bottom:none;}
+.master-item-key{font-size:10px;color:var(--text-light);font-family:monospace;background:var(--bg);padding:2px 6px;border-radius:4px;margin-left:8px;}
+.master-item button{background:none;border:none;cursor:pointer;color:var(--text-light);padding:4px;border-radius:4px;display:flex;}
+.master-item button:hover{color:var(--danger);background:var(--bg);}
+.master-add{display:flex;gap:8px;margin-top:12px;}
+.master-add input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;}
+
 /* ===== RESPONSIVE ===== */
 
 /* Tablet */
@@ -412,6 +425,10 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
         사용 가이드
       </button>
+      <button onclick="closeSettingsPopup();openMasterModal()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        마스터 데이터
+      </button>
       <button id="btnPermManage" onclick="closeSettingsPopup();openPermModal()">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
         권한 관리
@@ -448,10 +465,6 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
       <div class="select-wrap">
         <select id="filterType" onchange="renderAll()">
           <option value="all">모든 업무</option>
-          <option value="viral">바이럴</option>
-          <option value="seeding">인플루언서 시딩</option>
-          <option value="budget">예산 관리</option>
-          <option value="comm">커뮤니케이션</option>
         </select>
       </div>
       <button class="btn btn-primary" onclick="openAddModal()">+ 새 업무</button>
@@ -531,7 +544,7 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
     <div class="form-group"><label>업무 제목</label><input type="text" id="inputTitle" placeholder="A브랜드 3월 바이럴 콘텐츠 기획"></div>
     <div class="form-group"><label>광고주</label><input type="text" id="inputBrand" placeholder="A브랜드" list="brandDL"><datalist id="brandDL"></datalist></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>업무 유형</label><select id="inputType"><option value="viral">바이럴</option><option value="seeding">인플루언서 시딩</option><option value="budget">예산 관리</option><option value="comm">커뮤니케이션</option></select></div>
+      <div class="form-group"><label>업무 유형</label><select id="inputType"></select></div>
       <div class="form-group"><label>우선순위</label><select id="inputPriority"><option value="normal">보통</option><option value="urgent">긴급</option><option value="high">높음</option><option value="low">낮음</option></select></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -556,7 +569,7 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
     <input type="hidden" id="kpiEditId">
     <div class="form-group"><label>KPI 항목</label><input type="text" id="kpiName" placeholder="바이럴 콘텐츠 발행 건수"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-group"><label>카테고리</label><select id="kpiCategory"><option value="viral">바이럴</option><option value="seeding">인플루언서 시딩</option><option value="budget">예산 관리</option><option value="comm">커뮤니케이션</option><option value="general">일반</option></select></div>
+      <div class="form-group"><label>카테고리</label><select id="kpiCategory"></select></div>
       <div class="form-group"><label>단위</label><input type="text" id="kpiUnit" placeholder="건, %, 개"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -570,6 +583,24 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
       <button class="btn" id="btnKpiDelete" style="display:none;background:var(--danger);color:#fff;" onclick="deleteKpi()">삭제</button>
       <button class="btn btn-primary" onclick="saveKpi()">저장</button>
     </div>
+  </div>
+</div>
+
+<!-- MASTER DATA -->
+<div class="modal-overlay" id="masterOverlay">
+  <div class="modal" style="max-width:480px;">
+    <h2><span>마스터 데이터 관리</span><button class="modal-close" onclick="closeMasterModal()"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M18 6L6 18M6 6l12 12"/></svg></button></h2>
+    <div class="master-tabs">
+      <button class="master-tab active" onclick="switchMasterTab('brands',this)">광고주</button>
+      <button class="master-tab" onclick="switchMasterTab('types',this)">업무 유형</button>
+    </div>
+    <ul class="master-list" id="masterList"></ul>
+    <div class="master-add" id="masterAddRow">
+      <input type="text" id="masterNewKey" placeholder="영문 키 (예: brandC)" style="width:100px;flex:none;">
+      <input type="text" id="masterNewLabel" placeholder="표시 이름 (예: C브랜드)">
+      <button class="btn btn-primary" style="font-size:11px;white-space:nowrap;" onclick="addMasterItem()">추가</button>
+    </div>
+    <p class="perm-note">광고주와 업무 유형을 관리합니다. 삭제해도 기존 카드 데이터에는 영향 없습니다.</p>
   </div>
 </div>
 
@@ -657,6 +688,68 @@ const SB_URL='https://qfztyoscmifbptvxqnlu.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmenR5b3NjbWlmYnB0dnhxbmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4OTc4ODksImV4cCI6MjA4OTQ3Mzg4OX0.jPn0JkYDPhUtPXRBRIng5EO6GWmIgKZWWKXsvnPrpOw';
 const SB_BUCKET='kanban-attachments';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+// ==================== MASTER DATA ====================
+const defaultBrands=[{key:'A브랜드',label:'A브랜드'},{key:'B브랜드',label:'B브랜드'},{key:'C브랜드',label:'C브랜드'},{key:'D브랜드',label:'D브랜드'},{key:'E브랜드',label:'E브랜드'}];
+const defaultTypes=[{key:'viral',label:'바이럴'},{key:'seeding',label:'인플루언서 시딩'},{key:'budget',label:'예산 관리'},{key:'comm',label:'커뮤니케이션'}];
+let masterBrands=JSON.parse(localStorage.getItem('kb_master_brands')||'null')||[...defaultBrands];
+let masterTypes=JSON.parse(localStorage.getItem('kb_master_types')||'null')||[...defaultTypes];
+let masterTab='brands';
+
+function saveMaster(){localStorage.setItem('kb_master_brands',JSON.stringify(masterBrands));localStorage.setItem('kb_master_types',JSON.stringify(masterTypes));}
+
+function populateSelects(){
+  // inputType
+  const it=document.getElementById('inputType'),oldT=it.value;
+  it.innerHTML=masterTypes.map(t=>`<option value="${t.key}">${t.label}</option>`).join('');
+  if(oldT)it.value=oldT;
+  // kpiCategory
+  const kc=document.getElementById('kpiCategory');
+  const oldK=kc.value;
+  kc.innerHTML=masterTypes.map(t=>`<option value="${t.key}">${t.label}</option>`).join('')+'<option value="general">일반</option>';
+  if(oldK)kc.value=oldK;
+  // filterType
+  const ft=document.getElementById('filterType'),oldF=ft.value;
+  ft.innerHTML='<option value="all">모든 업무</option>'+masterTypes.map(t=>`<option value="${t.key}">${t.label}</option>`).join('');
+  if(oldF)ft.value=oldF;
+  // brandDL datalist
+  document.getElementById('brandDL').innerHTML=masterBrands.map(b=>`<option value="${b.label}">`).join('');
+}
+
+function openMasterModal(){masterTab='brands';renderMasterList();document.getElementById('masterOverlay').classList.add('active');}
+function closeMasterModal(){document.getElementById('masterOverlay').classList.remove('active');populateSelects();renderAll();}
+
+function switchMasterTab(tab,btn){
+  masterTab=tab;
+  document.querySelectorAll('.master-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMasterList();
+}
+
+function renderMasterList(){
+  const list=masterTab==='brands'?masterBrands:masterTypes;
+  document.getElementById('masterList').innerHTML=list.map((item,i)=>
+    `<li class="master-item"><span>${item.label}<span class="master-item-key">${item.key}</span></span><button onclick="deleteMasterItem(${i})" title="삭제"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></li>`
+  ).join('');
+  document.getElementById('masterNewKey').placeholder=masterTab==='brands'?'영문 키 (예: F브랜드)':'영문 키 (예: media)';
+  document.getElementById('masterNewLabel').placeholder=masterTab==='brands'?'표시 이름 (예: F브랜드)':'표시 이름 (예: 미디어 바잉)';
+}
+
+function addMasterItem(){
+  const key=document.getElementById('masterNewKey').value.trim(),label=document.getElementById('masterNewLabel').value.trim();
+  if(!key||!label){showToast('키와 이름을 모두 입력해주세요');return;}
+  const list=masterTab==='brands'?masterBrands:masterTypes;
+  if(list.find(i=>i.key===key)){showToast('이미 존재하는 키');return;}
+  list.push({key,label});saveMaster();renderMasterList();
+  document.getElementById('masterNewKey').value='';document.getElementById('masterNewLabel').value='';
+  showToast('추가 완료');
+}
+
+function deleteMasterItem(i){
+  const list=masterTab==='brands'?masterBrands:masterTypes;
+  if(!confirm(`"${list[i].label}" 항목을 삭제할까요?`))return;
+  list.splice(i,1);saveMaster();renderMasterList();showToast('삭제 완료');
+}
 
 // ==================== AUTH ====================
 let currentUser=null;
@@ -857,6 +950,7 @@ function saveToStorage(){
 
 async function init(){
   if(initialized)return;initialized=true;
+  populateSelects();
   try{
     const sc=localStorage.getItem('kb_cards'),sk=localStorage.getItem('kb_kpis');
     if(sc){cards=JSON.parse(sc);nextId=parseInt(localStorage.getItem('kb_nextId'))||cards.length+1;}
@@ -940,7 +1034,7 @@ function renderKanban(){
 
 function createCard(card){
   const div=document.createElement('div');div.className='k-card';div.draggable=true;div.dataset.id=card.id;
-  const tl={viral:'바이럴',seeding:'시딩',budget:'예산',comm:'소통'};
+  const tl=Object.fromEntries(masterTypes.map(t=>[t.key,t.label]));
   const pc={urgent:'k-prio-urgent',high:'k-prio-high',normal:'k-prio-normal',low:'k-prio-low'};
   let dueHtml='';
   if(card.due){
@@ -1015,7 +1109,8 @@ function renderProgress(){
     <div class="stat-card"><div class="stat-icon" style="background:var(--warning-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--warning)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div class="stat-value">${wait}</div><div class="stat-label">컨펌 대기</div></div>
     <div class="stat-card"><div class="stat-icon" style="background:var(--danger-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--danger)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-value">${urg}</div><div class="stat-label">긴급 업무</div></div>`;
 
-  const types=[{id:'viral',label:'바이럴',color:'var(--viral)'},{id:'seeding',label:'인플루언서 시딩',color:'var(--seeding)'},{id:'budget',label:'예산 관리',color:'var(--budget)'},{id:'comm',label:'커뮤니케이션',color:'var(--comm)'}];
+  const typeColors={viral:'var(--viral)',seeding:'var(--seeding)',budget:'var(--budget)',comm:'var(--comm)'};
+  const types=masterTypes.map(t=>({id:t.key,label:t.label,color:typeColors[t.key]||'var(--primary)'}));
   let tp='';types.forEach(t=>{const tot=cards.filter(c=>c.type===t.id).length,td=cards.filter(c=>c.type===t.id&&c.column==='done').length,pct=tot?Math.round(td/tot*100):0;
     tp+=`<div class="progress-row"><div class="progress-label"><span>${t.label}</span><strong>${td}/${tot} (${pct}%)</strong></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${t.color}"></div></div></div>`;
   });document.getElementById('typeProgress').innerHTML=tp;
@@ -1073,7 +1168,7 @@ function renderKpi(){
     <div class="stat-card"><div class="stat-icon" style="background:var(--accent-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--accent)" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><div class="stat-value">${avg}%</div><div class="stat-label">평균 달성률</div></div>
     <div class="stat-card"><div class="stat-icon" style="background:var(--danger-light);"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--danger)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-value">${risk}</div><div class="stat-label">위험 항목</div></div>`;
 
-  const cl={viral:'바이럴',seeding:'인플루언서 시딩',budget:'예산 관리',comm:'커뮤니케이션',general:'일반'};
+  const cl=Object.fromEntries([...masterTypes.map(t=>[t.key,t.label]),['general','일반']]);
   let html='';
   mk.forEach(k=>{
     const pct=k.target?Math.min(100,Math.round(k.current/k.target*100)):0;

@@ -239,6 +239,38 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
 .hamburger svg{width:22px;height:22px;}
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99;}
 
+/* Settings popup */
+.settings-popup{position:absolute;bottom:100%;left:10px;right:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 -4px 16px rgba(0,0,0,.1);padding:4px;display:none;z-index:101;}
+.settings-popup.active{display:block;}
+.settings-popup button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:none;background:none;border-radius:8px;font-size:13px;font-family:inherit;color:var(--text-mid);cursor:pointer;font-weight:500;}
+.settings-popup button:hover{background:var(--primary-light);color:var(--text);}
+.settings-popup button svg{width:16px;height:16px;flex-shrink:0;}
+
+/* Permissions modal */
+.perm-section{margin-bottom:16px;}
+.perm-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.perm-section-header h3{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.perm-table{width:100%;border-collapse:collapse;}
+.perm-table th{text-align:left;font-size:10px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--border);}
+.perm-table td{padding:10px;border-bottom:1px solid var(--border-light);font-size:12px;vertical-align:middle;}
+.perm-table tr:last-child td{border-bottom:none;}
+.perm-name{font-weight:600;color:var(--text);}
+.perm-email{color:var(--text-mid);}
+.perm-role{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;}
+.perm-role-admin{background:#1a1a1a;color:#fff;}
+.perm-role-editor{background:#e3f2fd;color:#2980b9;}
+.perm-role-viewer{background:#f0f0f0;color:#666;}
+.perm-status{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;background:#e8f5e9;color:#27ae60;}
+.perm-actions{display:flex;gap:6px;}
+.perm-actions button{background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;color:var(--text-light);display:flex;align-items:center;}
+.perm-actions button:hover{background:var(--bg);color:var(--text);}
+.perm-actions .perm-del:hover{color:var(--danger);}
+.perm-add-row{display:flex;gap:8px;margin-top:12px;}
+.perm-add-row input,.perm-add-row select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;}
+.perm-add-row input{flex:1;}
+.perm-add-row select{width:100px;}
+.perm-note{font-size:11px;color:var(--text-light);margin-top:12px;}
+
 /* ===== RESPONSIVE ===== */
 
 /* Tablet */
@@ -333,10 +365,20 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
       </div>
     </div>
   </nav>
-  <div class="sidebar-footer">
-    <button class="nav-item" onclick="toggleGuide()">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
-      사용 가이드
+  <div class="sidebar-footer" style="position:relative;">
+    <div class="settings-popup" id="settingsPopup">
+      <button onclick="closeSettingsPopup();toggleGuide()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+        사용 가이드
+      </button>
+      <button onclick="closeSettingsPopup();openPermModal()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        권한 관리
+      </button>
+    </div>
+    <button class="nav-item" onclick="toggleSettingsPopup()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      설정
     </button>
   </div>
 </div>
@@ -481,6 +523,30 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
       <button class="btn btn-outline" onclick="closeKpiModal()">취소</button>
       <button class="btn" id="btnKpiDelete" style="display:none;background:var(--danger);color:#fff;" onclick="deleteKpi()">삭제</button>
       <button class="btn btn-primary" onclick="saveKpi()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- PERMISSIONS -->
+<div class="modal-overlay" id="permOverlay">
+  <div class="modal" style="max-width:560px;">
+    <h2><span>권한 관리</span><button class="modal-close" onclick="closePermModal()"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M18 6L6 18M6 6l12 12"/></svg></button></h2>
+    <div class="perm-section">
+      <div class="perm-section-header">
+        <h3><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> 사용자 목록</h3>
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="showAddUser()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> 사용자 추가</button>
+      </div>
+      <table class="perm-table">
+        <thead><tr><th>이름</th><th>이메일</th><th>역할</th><th>상태</th><th>작업</th></tr></thead>
+        <tbody id="permUserList"></tbody>
+      </table>
+      <div id="permAddRow" style="display:none;" class="perm-add-row">
+        <input type="text" id="permNewName" placeholder="이름">
+        <input type="email" id="permNewEmail" placeholder="이메일">
+        <select id="permNewRole"><option value="editor">편집자</option><option value="viewer">뷰어</option></select>
+        <button class="btn btn-primary" style="font-size:11px;white-space:nowrap;" onclick="addPermUser()">추가</button>
+      </div>
+      <p class="perm-note">등록된 사용자만 대시보드에 접근할 수 있습니다. 비활성 사용자는 접근이 차단됩니다.</p>
     </div>
   </div>
 </div>
@@ -917,6 +983,48 @@ function deleteCard(){const eid=document.getElementById('editId').value;if(eid&&
 function exportData(){const json=JSON.stringify({cards,nextId,kpis,nextKpiId},null,2);const blob=new Blob([json],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`dashboard_${new Date().toISOString().slice(0,10)}.json`;a.click();showToast('저장 파일 다운로드');}
 function importData(){const input=document.createElement('input');input.type='file';input.accept='.json';input.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.cards){cards=d.cards;nextId=d.nextId||cards.length+1;if(d.kpis){kpis=d.kpis;nextKpiId=d.nextKpiId||kpis.length+1;}saveToStorage();renderAll();showToast('불러오기 완료');}}catch{showToast('파일 형식이 올바르지 않습니다');}};r.readAsText(f);};input.click();}
 function toggleGuide(){document.getElementById('guideOverlay').classList.toggle('active');}
+
+// Settings popup
+function toggleSettingsPopup(){document.getElementById('settingsPopup').classList.toggle('active');}
+function closeSettingsPopup(){document.getElementById('settingsPopup').classList.remove('active');}
+document.addEventListener('click',e=>{if(!e.target.closest('.sidebar-footer'))closeSettingsPopup();});
+
+// Permissions
+let permUsers=JSON.parse(localStorage.getItem('kb_perm_users')||'null')||[{name:'백세영',email:'birdzer0@kyho-lab.com',role:'admin',status:'active'}];
+function savePermUsers(){localStorage.setItem('kb_perm_users',JSON.stringify(permUsers));}
+function openPermModal(){renderPermUsers();document.getElementById('permOverlay').classList.add('active');}
+function closePermModal(){document.getElementById('permOverlay').classList.remove('active');}
+function renderPermUsers(){
+  const rl={admin:'관리자',editor:'편집자',viewer:'뷰어'};
+  const rc={admin:'perm-role-admin',editor:'perm-role-editor',viewer:'perm-role-viewer'};
+  document.getElementById('permUserList').innerHTML=permUsers.map((u,i)=>`<tr>
+    <td class="perm-name">${u.name}${u.role==='admin'?' <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;color:var(--text-light);"><path d="M12 15l-3-3h6l-3 3z"/><circle cx="12" cy="12" r="10"/></svg>':''}</td>
+    <td class="perm-email">${u.email}</td>
+    <td><span class="perm-role ${rc[u.role]}">${rl[u.role]}</span></td>
+    <td><span class="perm-status">${u.status==='active'?'활성':'비활성'}</span></td>
+    <td class="perm-actions">${u.role!=='admin'?`<button onclick="editPermRole(${i})" title="역할 변경"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="perm-del" onclick="deletePermUser(${i})" title="삭제"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>`:''}</td>
+  </tr>`).join('');
+}
+function showAddUser(){document.getElementById('permAddRow').style.display='flex';document.getElementById('permNewEmail').focus();}
+function addPermUser(){
+  const name=document.getElementById('permNewName').value.trim(),email=document.getElementById('permNewEmail').value.trim(),role=document.getElementById('permNewRole').value;
+  if(!email){showToast('이메일을 입력해주세요');return;}
+  if(permUsers.find(u=>u.email===email)){showToast('이미 등록된 이메일');return;}
+  permUsers.push({name:name||email.split('@')[0],email,role,status:'active'});
+  savePermUsers();renderPermUsers();
+  document.getElementById('permNewName').value='';document.getElementById('permNewEmail').value='';
+  document.getElementById('permAddRow').style.display='none';showToast('사용자 추가 완료');
+}
+function editPermRole(i){
+  if(permUsers[i].role==='admin')return;
+  permUsers[i].role=permUsers[i].role==='editor'?'viewer':'editor';
+  savePermUsers();renderPermUsers();showToast('역할 변경 완료');
+}
+function deletePermUser(i){
+  if(permUsers[i].role==='admin')return;
+  if(!confirm(`${permUsers[i].name} 사용자를 삭제할까요?`))return;
+  permUsers.splice(i,1);savePermUsers();renderPermUsers();showToast('삭제 완료');
+}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
 init();

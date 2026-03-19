@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>BZ Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -443,7 +444,7 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
       <div class="form-group"><label>컬럼</label><select id="inputColumn"><option value="backlog">백로그</option><option value="progress">진행중</option><option value="today">오늘 집중</option><option value="waiting">컨펌 대기</option><option value="done">완료</option></select></div>
     </div>
     <div class="form-group"><label>메모</label><textarea id="inputNote" placeholder="상세 내용, 참고 사항"></textarea></div>
-    <div class="form-group"><label>첨부 이미지</label><div id="attachList" class="attach-list"></div><button type="button" class="attach-btn" onclick="addAttachment()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>이미지 추가 (500KB 이하)</button></div>
+    <div class="form-group"><label>첨부파일</label><div id="attachList" class="attach-list"></div><button type="button" class="attach-btn" onclick="addAttachment()"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>파일 추가 (10MB 이하)</button></div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal()">취소</button>
       <button class="btn" id="btnDelete" style="display:none;background:var(--danger);color:#fff;" onclick="deleteCard()">삭제</button>
@@ -531,31 +532,55 @@ const sampleCards=[
 ];
 
 
-// Attachments
-let tempAttachments=[];
-function addAttachment(){
-  const input=document.createElement('input');input.type='file';input.accept='image/*';input.multiple=true;
-  input.onchange=e=>{
-    Array.from(e.target.files).forEach(f=>{
-      if(f.size>512000){showToast('500KB 이하 이미지만 가능');return;}
-      const r=new FileReader();r.onload=ev=>{tempAttachments.push(ev.target.result);renderAttachList();};r.readAsDataURL(f);
-    });
+// Supabase
+const SB_URL='https://qfztyoscmifbptvxqnlu.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmenR5b3NjbWlmYnB0dnhxbmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4OTc4ODksImV4cCI6MjA4OTQ3Mzg4OX0.jPn0JkYDPhUtPXRBRIng5EO6GWmIgKZWWKXsvnPrpOw';
+const SB_BUCKET='kanban-attachments';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+// Attachments (Supabase Storage)
+let tempAttachments=[];// [{url,name,path}]
+async function addAttachment(){
+  const input=document.createElement('input');input.type='file';input.accept='image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx';input.multiple=true;
+  input.onchange=async e=>{
+    for(const f of e.target.files){
+      if(f.size>10485760){showToast('10MB 이하 파일만 가능');continue;}
+      const path=`${Date.now()}_${Math.random().toString(36).slice(2)}_${f.name}`;
+      showToast('업로드 중...');
+      const{error}=await sb.storage.from(SB_BUCKET).upload(path,f);
+      if(error){showToast('업로드 실패: '+error.message);continue;}
+      const{data}=sb.storage.from(SB_BUCKET).getPublicUrl(path);
+      tempAttachments.push({url:data.publicUrl,name:f.name,path});
+      renderAttachList();
+      showToast('업로드 완료');
+    }
   };input.click();
 }
-function removeAttachment(i){tempAttachments.splice(i,1);renderAttachList();}
+async function removeAttachment(i){
+  const a=tempAttachments[i];
+  if(a&&a.path){await sb.storage.from(SB_BUCKET).remove([a.path]);}
+  tempAttachments.splice(i,1);renderAttachList();
+}
 function renderAttachList(){
   const el=document.getElementById('attachList');
-  el.innerHTML=tempAttachments.map((a,i)=>`<div class="attach-item"><img src="${a}" onclick="event.stopPropagation();viewImg('${a.substring(0,50)}',${i})"><button class="attach-remove" onclick="removeAttachment(${i})">x</button></div>`).join('');
+  el.innerHTML=tempAttachments.map((a,i)=>{
+    const isImg=/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.name||a.url||a);
+    const src=typeof a==='string'?a:(a.url||a);
+    const name=a.name||'file';
+    if(isImg) return `<div class="attach-item"><img src="${src}" onclick="event.stopPropagation();viewImg('${src}')"><button class="attach-remove" onclick="removeAttachment(${i})">x</button></div>`;
+    return `<div class="attach-item" style="display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:6px;border:1px solid var(--border);font-size:9px;text-align:center;padding:4px;word-break:break-all;cursor:pointer;" onclick="event.stopPropagation();window.open('${src}','_blank')"><span>${name.length>12?name.slice(0,10)+'...':name}</span><button class="attach-remove" onclick="event.stopPropagation();removeAttachment(${i})">x</button></div>`;
+  }).join('');
 }
-function viewImg(src,idx){
-  const a=typeof idx==='number'&&tempAttachments[idx]?tempAttachments[idx]:src;
+function viewImg(src){
   const v=document.createElement('div');v.className='img-viewer';v.onclick=()=>v.remove();
-  v.innerHTML=`<img src="${a}">`;document.body.appendChild(v);
+  v.innerHTML=`<img src="${src}">`;document.body.appendChild(v);
 }
 function viewCardImg(cardId,idx){
   const card=cards.find(c=>c.id===cardId);if(!card||!card.attachments||!card.attachments[idx])return;
-  const v=document.createElement('div');v.className='img-viewer';v.onclick=()=>v.remove();
-  v.innerHTML=`<img src="${card.attachments[idx]}">`;document.body.appendChild(v);
+  const a=card.attachments[idx];const src=typeof a==='string'?a:(a.url||a);
+  const isImg=/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.name||src)||src.startsWith('data:image');
+  if(isImg){const v=document.createElement('div');v.className='img-viewer';v.onclick=()=>v.remove();v.innerHTML=`<img src="${src}">`;document.body.appendChild(v);}
+  else window.open(src,'_blank');
 }
 
 // Context menu
@@ -682,7 +707,7 @@ function createCard(card){
     <div class="k-card-title">${card.title}</div>
     <div class="k-card-meta"><span class="tag tag-${card.type}">${tl[card.type]||card.type}</span></div>
     <div class="k-card-bottom"><span class="k-card-brand">${card.brand||''}</span>${dueHtml}</div>
-    ${card.attachments&&card.attachments.length?`<div class="k-card-attachments">${card.attachments.slice(0,3).map((a,i)=>`<img class="k-card-thumb" src="${a}" onclick="event.stopPropagation();viewCardImg(${card.id},${i})">`).join('')}${card.attachments.length>3?`<span style="font-size:10px;color:var(--text-light);align-self:center;">+${card.attachments.length-3}</span>`:''}</div>`:''}`;
+    ${card.attachments&&card.attachments.length?`<div class="k-card-attachments">${card.attachments.slice(0,3).map((a,i)=>{const src=typeof a==='string'?a:(a.url||a);const nm=a.name||src;const isImg=/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(nm)||src.startsWith('data:image');return isImg?`<img class="k-card-thumb" src="${src}" onclick="event.stopPropagation();viewCardImg(${card.id},${i})">`:`<div class="k-card-thumb" style="display:flex;align-items:center;justify-content:center;background:var(--bg);font-size:8px;text-align:center;overflow:hidden;" onclick="event.stopPropagation();viewCardImg(${card.id},${i})"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--text-light)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>`;}).join('')}${card.attachments.length>3?`<span style="font-size:10px;color:var(--text-light);align-self:center;">+${card.attachments.length-3}</span>`:''}</div>`:''}`;
   div.addEventListener('click',()=>openEditModal(card.id));
   div.addEventListener('contextmenu',e=>showCtxMenu(e,card.id));
   div.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',card.id);div.classList.add('dragging');});

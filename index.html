@@ -107,6 +107,13 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
 .k-card:hover .k-prio{display:none;}
 .k-card-actions button{background:var(--bg);border:1px solid var(--border);border-radius:5px;width:24px;height:24px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--text-mid);}
 .drop-zone{border:2px dashed #ccc;border-radius:8px;min-height:36px;margin:4px;background:#f5f5f5;opacity:.5;}
+.urgent-section{margin-bottom:20px;}
+.urgent-section-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--danger);}
+.urgent-section-header .urgent-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);}
+.urgent-section-header .urgent-count{font-size:11px;font-weight:600;color:#fff;background:var(--danger);border-radius:10px;padding:1px 8px;margin-left:4px;}
+.urgent-board{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;}
+.urgent-board .k-card{min-width:240px;max-width:280px;flex-shrink:0;border-left:3px solid var(--danger);}
+.kanban-divider{height:1px;background:var(--border);margin-bottom:20px;}
 .ctx-menu{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:300;min-width:140px;}
 .ctx-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border:none;background:none;font-size:12px;font-family:inherit;color:var(--text);cursor:pointer;border-radius:6px;}
 .ctx-menu button:hover{background:var(--bg);}
@@ -353,6 +360,7 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
 
   <!-- KANBAN -->
   <div class="page active" id="page-kanban">
+    <div id="urgentSection"></div>
     <div class="kanban-board" id="kanbanBoard"></div>
   </div>
 
@@ -591,7 +599,18 @@ function updateBrandFilter(){
 const colDefs=[{id:'backlog',label:'Backlog',dot:'dot-backlog'},{id:'progress',label:'Inprogress',dot:'dot-progress'},{id:'today',label:'Today',dot:'dot-today'},{id:'waiting',label:'Onhold',dot:'dot-waiting'},{id:'done',label:'Done',dot:'dot-done'}];
 const pOrder={urgent:0,high:1,normal:2,low:3};
 
+function renderUrgent(){
+  const sec=document.getElementById('urgentSection');
+  const filtered=getFiltered();
+  const urgentCards=filtered.filter(c=>c.priority==='urgent'&&c.column!=='done');
+  if(!urgentCards.length){sec.innerHTML='';return;}
+  sec.innerHTML=`<div class="urgent-section"><div class="urgent-section-header"><span class="urgent-dot"></span>긴급<span class="urgent-count">${urgentCards.length}</span></div><div class="urgent-board" id="urgentBoard"></div></div><div class="kanban-divider"></div>`;
+  const board=document.getElementById('urgentBoard');
+  urgentCards.forEach(card=>board.appendChild(createCard(card)));
+}
+
 function renderKanban(){
+  renderUrgent();
   const board=document.getElementById('kanbanBoard');board.innerHTML='';
   const filtered=getFiltered();
   colDefs.forEach(col=>{

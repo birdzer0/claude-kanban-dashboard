@@ -546,7 +546,8 @@ async function addAttachment(){
   input.onchange=async e=>{
     for(const f of e.target.files){
       if(f.size>10485760){showToast('10MB 이하 파일만 가능');continue;}
-      const path=`${Date.now()}_${Math.random().toString(36).slice(2)}_${f.name}`;
+      const ext=f.name.includes('.')?'.'+f.name.split('.').pop():'';
+      const path=`${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`;
       showToast('업로드 중...');
       const{error}=await sb.storage.from(SB_BUCKET).upload(path,f);
       if(error){showToast('업로드 실패: '+error.message);continue;}

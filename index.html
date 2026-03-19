@@ -197,6 +197,10 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
 /* KPI */
 .kpi-card{background:var(--card);border-radius:10px;padding:18px 20px;border:1px solid var(--border-light);margin-bottom:10px;cursor:pointer;transition:all .12s;}
 .kpi-card:hover{box-shadow:0 2px 8px rgba(91,106,191,.06);border-color:var(--border);}
+.kpi-card.kpi-selected{border-color:var(--danger);background:#fef8f8;}
+.kpi-card .kpi-check{position:absolute;top:12px;left:12px;width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;display:none;align-items:center;justify-content:center;font-size:11px;color:#fff;z-index:1;}
+.kpi-select-mode .kpi-card .kpi-check{display:flex;}
+.kpi-card.kpi-selected .kpi-check{background:var(--danger);border-color:var(--danger);}
 .kpi-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .kpi-header h3{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text);}
 .kpi-pct{font-size:18px;font-weight:800;}
@@ -422,6 +426,8 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
         <button class="btn btn-outline" onclick="kpiNav(-1)">&larr; 이전 달</button>
         <button class="btn btn-outline" onclick="kpiNav(0)">이번 달</button>
         <button class="btn btn-outline" onclick="kpiNav(1)">다음 달 &rarr;</button>
+        <button class="btn btn-outline" id="btnKpiSelectMode" onclick="toggleKpiSelectMode()" style="font-size:11px;">선택</button>
+        <button class="btn" id="btnKpiBulkDelete" style="display:none;background:var(--danger);color:#fff;font-size:11px;" onclick="bulkDeleteKpi()">삭제</button>
         <button class="btn btn-primary" onclick="openKpiModal()">+ KPI 추가</button>
       </div>
     </div>
@@ -840,7 +846,8 @@ function renderKpi(){
     else{sc='kpi-atrisk';sl='위험';}
     const bc=pct>=100?'var(--success)':pct>=exp*.8?'var(--primary)':pct>=exp*.5?'var(--warning)':'var(--danger)';
 
-    html+=`<div class="kpi-card" onclick="openKpiEditModal(${k.id})">
+    html+=`<div class="kpi-card" style="position:relative;" onclick="kpiCardClick(event,${k.id})" oncontextmenu="showKpiCtx(event,${k.id})">
+      <div class="kpi-check"></div>
       <div class="kpi-header"><h3><span class="tag tag-${k.category}">${cl[k.category]||k.category}</span>${k.name}</h3>
       <div style="display:flex;align-items:center;gap:8px;"><span class="kpi-status ${sc}">${sl}</span><span class="kpi-pct" style="color:${bc}">${pct}%</span></div></div>
       <div class="progress-row" style="margin-bottom:0;"><div class="progress-bar" style="height:8px;position:relative;">
@@ -862,6 +869,42 @@ function openKpiEditModal(id){const k=kpis.find(x=>x.id===id);if(!k)return;docum
 function closeKpiModal(){document.getElementById('kpiModalOverlay').classList.remove('active');}
 function saveKpi(){const name=document.getElementById('kpiName').value.trim(),target=parseInt(document.getElementById('kpiTarget').value);if(!name||isNaN(target)){showToast('KPI 항목과 목표를 입력해주세요');return;}const data={name,category:document.getElementById('kpiCategory').value,unit:document.getElementById('kpiUnit').value.trim()||'건',target,current:parseInt(document.getElementById('kpiCurrent').value)||0,month:document.getElementById('kpiMonth').value,note:document.getElementById('kpiNote').value.trim()};const eid=document.getElementById('kpiEditId').value;if(eid){const k=kpis.find(x=>x.id===parseInt(eid));if(k)Object.assign(k,data);}else{kpis.push({id:nextKpiId++,...data});}saveToStorage();closeKpiModal();renderKpi();showToast('저장 완료');}
 function deleteKpi(){const eid=document.getElementById('kpiEditId').value;if(eid&&confirm('이 KPI를 삭제할까요?')){kpis=kpis.filter(k=>k.id!==parseInt(eid));saveToStorage();closeKpiModal();renderKpi();showToast('삭제 완료');}}
+
+// KPI select mode + context menu
+let kpiSelectMode=false,kpiSelected=new Set();
+function toggleKpiSelectMode(){
+  kpiSelectMode=!kpiSelectMode;kpiSelected.clear();
+  document.getElementById('page-kpi').classList.toggle('kpi-select-mode',kpiSelectMode);
+  document.getElementById('btnKpiSelectMode').textContent=kpiSelectMode?'취소':'선택';
+  document.getElementById('btnKpiBulkDelete').style.display=kpiSelectMode?'inline-flex':'none';
+  renderKpi();
+}
+function kpiCardClick(e,id){
+  if(kpiSelectMode){e.stopPropagation();
+    if(kpiSelected.has(id))kpiSelected.delete(id);else kpiSelected.add(id);
+    const card=e.currentTarget;card.classList.toggle('kpi-selected',kpiSelected.has(id));
+    card.querySelector('.kpi-check').innerHTML=kpiSelected.has(id)?'✓':'';
+    document.getElementById('btnKpiBulkDelete').textContent=`삭제 (${kpiSelected.size})`;
+  }else{openKpiEditModal(id);}
+}
+function bulkDeleteKpi(){
+  if(!kpiSelected.size)return;
+  if(!confirm(`${kpiSelected.size}개 KPI를 삭제할까요?`))return;
+  kpis=kpis.filter(k=>!kpiSelected.has(k.id));kpiSelected.clear();
+  saveToStorage();renderKpi();showToast('삭제 완료');
+  if(kpiSelectMode)toggleKpiSelectMode();
+}
+function showKpiCtx(e,id){
+  e.preventDefault();hideCtxMenu();
+  const m=document.createElement('div');m.className='ctx-menu';
+  m.innerHTML=`<button onclick="openKpiEditModal(${id});hideCtxMenu()"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>수정</button>`
+    +`<button class="ctx-danger" onclick="hideCtxMenu();if(confirm('이 KPI를 삭제할까요?')){kpis=kpis.filter(k=>k.id!==${id});saveToStorage();renderKpi();showToast('삭제 완료');}">`
+    +`<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>삭제</button>`;
+  document.body.appendChild(m);
+  const x=Math.min(e.clientX,window.innerWidth-m.offsetWidth-8);
+  const y=Math.min(e.clientY,window.innerHeight-m.offsetHeight-8);
+  m.style.left=x+'px';m.style.top=y+'px';ctxEl=m;
+}
 
 // MODALS
 function openAddModal(){document.getElementById('modalTitle').textContent='새 업무 추가';document.getElementById('editId').value='';document.getElementById('inputTitle').value='';document.getElementById('inputBrand').value='';document.getElementById('inputType').value='viral';document.getElementById('inputPriority').value='normal';document.getElementById('inputDue').value='';document.getElementById('inputNote').value='';document.getElementById('inputColumn').value='backlog';document.getElementById('btnDelete').style.display='none';tempAttachments=[];renderAttachList();document.getElementById('modalOverlay').classList.add('active');}

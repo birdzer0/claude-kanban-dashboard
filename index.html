@@ -1037,7 +1037,7 @@ function createCard(card){
   const tl=Object.fromEntries(masterTypes.map(t=>[t.key,t.label]));
   const pc={urgent:'k-prio-urgent',high:'k-prio-high',normal:'k-prio-normal',low:'k-prio-low'};
   let dueHtml='';
-  if(card.due){
+  if(card.due&&card.column!=='done'){
     const today=new Date();today.setHours(0,0,0,0);const d=new Date(card.due+'T00:00:00');
     const diff=Math.ceil((d-today)/864e5);
     const cls=diff<0?'overdue':diff<=1?'soon':'';

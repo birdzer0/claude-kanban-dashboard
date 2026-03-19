@@ -734,6 +734,45 @@ sb.auth.onAuthStateChange((event,session)=>{
   }else if(event==='SIGNED_OUT'){currentUser=null;initialized=false;showAuthScreen();}
 });
 
+// ==================== SYNC ====================
+async function getAuthUserId(){
+  const{data:{session}}=await sb.auth.getSession();
+  return session?.user?.id||null;
+}
+
+async function syncFromSupabase(){
+  const userId=await getAuthUserId();if(!userId)return;
+  try{
+    const{data:rc,error:ce}=await sb.from('cards').select('*').eq('user_id',userId);
+    if(!ce&&rc&&rc.length>0){
+      cards=rc.map(c=>({id:c.id,title:c.title,brand:c.brand,type:c.type,priority:c.priority,due:c.due,note:c.note,url:c.url,column:c.column,attachments:c.attachments||[]}));
+      nextId=Math.max(...cards.map(c=>c.id),0)+1;
+    }
+    const{data:rk,error:ke}=await sb.from('kpis').select('*').eq('user_id',userId);
+    if(!ke&&rk&&rk.length>0){
+      kpis=rk.map(k=>({id:k.id,name:k.name,category:k.category,unit:k.unit,target:k.target,current:k.current,month:k.month,note:k.note}));
+      nextKpiId=Math.max(...kpis.map(k=>k.id),0)+1;
+    }
+    saveToStorage();
+  }catch(e){console.warn('Sync pull failed:',e);}
+}
+
+async function syncToSupabase(){
+  const userId=await getAuthUserId();if(!userId)return;
+  try{
+    await sb.from('cards').delete().eq('user_id',userId);
+    if(cards.length>0){
+      const rows=cards.map(c=>({id:c.id,user_id:userId,title:c.title,brand:c.brand||'',type:c.type||'viral',priority:c.priority||'normal',due:c.due||'',note:c.note||'',url:c.url||'',column:c.column||'backlog',attachments:c.attachments||[],updated_at:new Date().toISOString()}));
+      await sb.from('cards').insert(rows);
+    }
+    await sb.from('kpis').delete().eq('user_id',userId);
+    if(kpis.length>0){
+      const rows=kpis.map(k=>({id:k.id,user_id:userId,name:k.name,category:k.category||'viral',unit:k.unit||'건',target:k.target||0,current:k.current||0,month:k.month||'',note:k.note||'',updated_at:new Date().toISOString()}));
+      await sb.from('kpis').insert(rows);
+    }
+  }catch(e){console.warn('Sync push failed:',e);}
+}
+
 // Attachments (Supabase Storage)
 let tempAttachments=[];// [{url,name,path}]
 async function addAttachment(){
@@ -813,9 +852,10 @@ function closeSidebar(){
 
 function saveToStorage(){
   try{localStorage.setItem('kb_cards',JSON.stringify(cards));localStorage.setItem('kb_nextId',nextId);localStorage.setItem('kb_kpis',JSON.stringify(kpis));localStorage.setItem('kb_nextKpiId',nextKpiId);}catch(e){}
+  clearTimeout(saveToStorage._t);saveToStorage._t=setTimeout(()=>syncToSupabase(),1000);
 }
 
-function init(){
+async function init(){
   if(initialized)return;initialized=true;
   try{
     const sc=localStorage.getItem('kb_cards'),sk=localStorage.getItem('kb_kpis');
@@ -829,6 +869,16 @@ function init(){
   }
   const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();kpiYear=n.getFullYear();kpiMonth=n.getMonth();
   renderAll();
+  // Supabase 동기화
+  const hadLocalCards=cards.length;
+  await syncFromSupabase();
+  renderAll();
+  // 최초 동기화: Supabase 비어있으면 localStorage 시딩
+  const userId=await getAuthUserId();
+  if(userId&&hadLocalCards>0){
+    const{count}=await sb.from('cards').select('*',{count:'exact',head:true}).eq('user_id',userId);
+    if(count===0)await syncToSupabase();
+  }
 }
 
 function showPage(name){

@@ -988,12 +988,9 @@ function getFiltered(){
 }
 
 function updateBrandFilter(){
+  const dl=document.getElementById('brandDL');if(!dl)return;
   const brands=[...new Set(cards.map(c=>c.brand).filter(Boolean))].sort();
-  const sel=document.getElementById('filterBrand'),cur=sel.value;
-  sel.innerHTML='<option value="all">모든 광고주</option>';
-  brands.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o);});
-  sel.value=cur;
-  const dl=document.getElementById('brandDL');dl.innerHTML='';
+  dl.innerHTML='';
   brands.forEach(b=>{const o=document.createElement('option');o.value=b;dl.appendChild(o);});
 }
 

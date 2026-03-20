@@ -92,6 +92,7 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
 .tag-seeding{background:#f3e5f5;color:#8e44ad;}
 .tag-budget{background:#e8f5e9;color:#27ae60;}
 .tag-comm{background:#e3f2fd;color:#2980b9;}
+.tag-ai{background:#f3e5f5;color:#8e24aa;}
 .tag-general{background:#f0f0f0;color:#666;}
 .k-card-bottom{display:flex;align-items:center;justify-content:space-between;}
 .k-card-brand{font-size:11px;color:var(--text-light);}
@@ -691,7 +692,7 @@ const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
 // ==================== MASTER DATA ====================
 const defaultBrands=[{key:'A브랜드',label:'A브랜드'},{key:'B브랜드',label:'B브랜드'},{key:'C브랜드',label:'C브랜드'},{key:'D브랜드',label:'D브랜드'},{key:'E브랜드',label:'E브랜드'}];
-const defaultTypes=[{key:'viral',label:'바이럴'},{key:'seeding',label:'인플루언서 시딩'},{key:'budget',label:'예산 관리'},{key:'comm',label:'커뮤니케이션'}];
+const defaultTypes=[{key:'viral',label:'바이럴'},{key:'seeding',label:'인플루언서 시딩'},{key:'budget',label:'예산 관리'},{key:'comm',label:'커뮤니케이션'},{key:'ai',label:'AI'}];
 let masterBrands=JSON.parse(localStorage.getItem('kb_master_brands')||'null')||[...defaultBrands];
 let masterTypes=JSON.parse(localStorage.getItem('kb_master_types')||'null')||[...defaultTypes];
 let masterTab='brands';
@@ -1077,7 +1078,7 @@ function renderCalendar(){
   ['일','월','화','수','목','금','토'].forEach(d=>{const h=document.createElement('div');h.className='cal-day-header';h.textContent=d;grid.appendChild(h);});
   const first=new Date(calYear,calMonth,1).getDay(),dim=new Date(calYear,calMonth+1,0).getDate(),prevDim=new Date(calYear,calMonth,0).getDate();
   const today=new Date();today.setHours(0,0,0,0);
-  const tc={viral:'tag-viral',seeding:'tag-seeding',budget:'tag-budget',comm:'tag-comm'};
+  const tc={viral:'tag-viral',seeding:'tag-seeding',budget:'tag-budget',comm:'tag-comm',ai:'tag-ai'};
   const filtered=getFiltered();
   for(let i=0;i<42;i++){
     const cell=document.createElement('div');cell.className='cal-day';

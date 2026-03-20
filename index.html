@@ -1040,7 +1040,7 @@ function createCard(card){
   if(card.due&&card.column!=='done'){
     const today=new Date();today.setHours(0,0,0,0);const d=new Date(card.due+'T00:00:00');
     const diff=Math.ceil((d-today)/864e5);
-    const cls=diff<0?'overdue':diff<=1?'soon':'';
+    const cls=diff<=0&&diff>=-2?'overdue':diff>=1&&diff<=2?'soon':'';
     const txt=diff<0?`${Math.abs(diff)}일 지남`:diff===0?'오늘 마감':diff===1?'내일 마감':`D-${diff}`;
     dueHtml=`<span class="k-card-due ${cls}">${txt}</span>`;
   }

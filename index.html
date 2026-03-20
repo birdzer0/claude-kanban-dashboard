@@ -459,14 +459,10 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
       <h1 id="pageTitle">백세영 칸반 보드</h1>
     </div>
     <div class="topbar-actions">
-      <button id="btnFilterReset" style="display:none;background:none;border:none;cursor:pointer;padding:0 2px;color:#ccc;font-size:16px;line-height:1;" onclick="resetFilters()" title="필터 초기화">&times;</button>
-      <div class="select-wrap">
-        <select id="filterBrand" onchange="renderAll()"><option value="all">모든 광고주</option></select>
-      </div>
-      <div class="select-wrap">
-        <select id="filterType" onchange="renderAll()">
-          <option value="all">모든 업무</option>
-        </select>
+      <div style="position:relative;display:flex;align-items:center;">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--text-light)" stroke-width="2" style="position:absolute;left:10px;pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="제목, 메모 검색" oninput="renderAll()" style="padding:7px 10px 7px 32px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;width:180px;background:var(--card);">
+        <button id="btnSearchClear" style="display:none;position:absolute;right:6px;background:none;border:none;cursor:pointer;color:#ccc;font-size:14px;line-height:1;padding:0;" onclick="document.getElementById('searchInput').value='';renderAll();">&times;</button>
       </div>
       <button class="btn btn-primary" onclick="openAddModal()">+ 새 업무</button>
       <button class="btn btn-outline btn-icon" onclick="exportData()" title="저장">
@@ -709,10 +705,6 @@ function populateSelects(){
   const oldK=kc.value;
   kc.innerHTML=masterTypes.map(t=>`<option value="${t.key}">${t.label}</option>`).join('')+'<option value="general">일반</option>';
   if(oldK)kc.value=oldK;
-  // filterType
-  const ft=document.getElementById('filterType'),oldF=ft.value;
-  ft.innerHTML='<option value="all">모든 업무</option>'+masterTypes.map(t=>`<option value="${t.key}">${t.label}</option>`).join('');
-  if(oldF)ft.value=oldF;
   // brandDL datalist
   document.getElementById('brandDL').innerHTML=masterBrands.map(b=>`<option value="${b.label}">`).join('');
 }
@@ -986,12 +978,13 @@ function showPage(name){
   renderAll();
 }
 
-function resetFilters(){document.getElementById('filterBrand').value='all';document.getElementById('filterType').value='all';renderAll();}
-function renderAll(){updateBrandFilter();renderKanban();renderCalendar();renderProgress();renderWeekly();renderKpi();const fb=document.getElementById('filterBrand').value,ft=document.getElementById('filterType').value;document.getElementById('btnFilterReset').style.display=(fb!=='all'||ft!=='all')?'inline-flex':'none';}
+function renderAll(){updateBrandFilter();renderKanban();renderCalendar();renderProgress();renderWeekly();renderKpi();const si=document.getElementById('searchInput');const bc=document.getElementById('btnSearchClear');if(si&&bc)bc.style.display=si.value?'block':'none';}
 
 function getFiltered(){
-  const fb=document.getElementById('filterBrand').value,ft=document.getElementById('filterType').value;
-  return cards.filter(c=>{if(fb!=='all'&&c.brand!==fb)return false;if(ft!=='all'&&c.type!==ft)return false;return true;});
+  const si=document.getElementById('searchInput');
+  const q=(si?si.value:'').trim().toLowerCase();
+  if(!q)return cards;
+  return cards.filter(c=>(c.title||'').toLowerCase().includes(q)||(c.note||'').toLowerCase().includes(q));
 }
 
 function updateBrandFilter(){

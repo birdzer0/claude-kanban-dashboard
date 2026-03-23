@@ -687,7 +687,7 @@ const SB_BUCKET='kanban-attachments';
 const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
 // ==================== MASTER DATA ====================
-const defaultBrands=[{key:'spnbt',label:'spnbt'},{key:'공통',label:'공통'},{key:'데이셀',label:'데이셀'},{key:'신규',label:'신규'},{key:'어니스트칩',label:'어니스트칩'},{key:'에이베러',label:'에이베러'}];
+const defaultBrands=[{key:'spnbt',label:'spnbt'},{key:'공통',label:'공통'},{key:'데이셀',label:'데이셀'},{key:'신규',label:'신규'},{key:'어니스트캄',label:'어니스트캄'},{key:'에이베러',label:'에이베러'}];
 const defaultTypes=[{key:'viral',label:'바이럴'},{key:'seeding',label:'인플루언서 시딩'},{key:'budget',label:'예산 관리'},{key:'comm',label:'커뮤니케이션'},{key:'ai',label:'AI'}];
 let masterBrands=JSON.parse(localStorage.getItem('kb_master_brands')||'null');
 if(!masterBrands||masterBrands.some(b=>b.key==='A브랜드'))masterBrands=[...defaultBrands];

@@ -117,9 +117,11 @@ body{font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sa
 .urgent-board .k-card{min-width:240px;max-width:280px;flex-shrink:0;border-left:3px solid var(--danger);}
 .kanban-divider{height:1px;background:var(--border);margin-bottom:20px;}
 .k-card-attachments{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;}
-.k-card-thumb{width:100%;height:80px;border-radius:6px;object-fit:cover;cursor:pointer;border:1px solid var(--border-light);}
-.k-card-thumb:hover{opacity:.8;}
-.k-card-attachments-single .k-card-thumb{height:100px;}
+.k-card-thumb-wrap{position:relative;width:100%;height:80px;border-radius:6px;overflow:hidden;border:1px solid var(--border-light);cursor:pointer;}
+.k-card-thumb-wrap:hover .thumb-drag-hint{opacity:1;}
+.k-card-thumb{width:100%;height:100%;object-fit:cover;pointer-events:none;}
+.k-card-attachments-single .k-card-thumb-wrap{height:100px;}
+.thumb-drag-hint{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;font-size:9px;padding:2px 8px;border-radius:10px;opacity:0;transition:opacity .15s;pointer-events:none;white-space:nowrap;}
 .attach-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
 .attach-item{position:relative;width:64px;height:64px;}
 .attach-item img{width:100%;height:100%;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer;}
@@ -899,6 +901,32 @@ function viewImg(src){
   const v=document.createElement('div');v.className='img-viewer';v.onclick=()=>v.remove();
   v.innerHTML=`<img src="${src}">`;document.body.appendChild(v);
 }
+// Thumbnail position drag
+let thumbDragState=null;
+function startThumbDrag(e,cardId,idx){
+  if(e.button!==0)return;
+  const img=e.currentTarget.querySelector('img');
+  const card=cards.find(c=>c.id===cardId);if(!card)return;
+  if(!card.thumbPos)card.thumbPos={};
+  const startY=e.clientY;
+  const startPos=card.thumbPos[idx]!=null?card.thumbPos[idx]:50;
+  thumbDragState={img,card,idx,startY,startPos,moved:false};
+  e.preventDefault();
+}
+document.addEventListener('mousemove',e=>{
+  if(!thumbDragState)return;
+  const{img,card,idx,startY,startPos}=thumbDragState;
+  const dy=e.clientY-startY;
+  if(Math.abs(dy)>3)thumbDragState.moved=true;
+  const newPos=Math.max(0,Math.min(100,startPos-dy*0.5));
+  img.style.objectPosition=`center ${newPos}%`;
+  card.thumbPos[idx]=Math.round(newPos);
+});
+document.addEventListener('mouseup',()=>{
+  if(thumbDragState&&thumbDragState.moved){saveToStorage();syncToSupabase&&syncToSupabase();}
+  thumbDragState=null;
+});
+
 function viewCardImg(cardId,idx){
   const card=cards.find(c=>c.id===cardId);if(!card||!card.attachments||!card.attachments[idx])return;
   const a=card.attachments[idx];const src=typeof a==='string'?a:(a.url||a);
@@ -1043,7 +1071,7 @@ function createCard(card){
     <div class="k-card-title">${card.title}</div>
     <div class="k-card-meta"><span class="tag tag-${card.type}">${tl[card.type]||card.type}</span></div>
     <div class="k-card-bottom"><span class="k-card-brand">${card.brand||''}${card.url?` <a href="${card.url}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text-light);"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></a>`:''}</span>${dueHtml}</div>
-    ${card.attachments&&card.attachments.length?`<div class="k-card-attachments${card.attachments.length===1?' k-card-attachments-single':''}" style="${card.attachments.length>1?'display:grid;grid-template-columns:repeat('+Math.min(card.attachments.length,3)+',1fr);':''}">${card.attachments.slice(0,3).map((a,i)=>{const src=typeof a==='string'?a:(a.url||a);const nm=a.name||src;const isImg=/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(nm)||src.startsWith('data:image');return isImg?`<img class="k-card-thumb" src="${src}" onclick="event.stopPropagation();viewCardImg(${card.id},${i})">`:`<div class="k-card-thumb" style="display:flex;align-items:center;justify-content:center;background:var(--bg);font-size:8px;text-align:center;overflow:hidden;" onclick="event.stopPropagation();viewCardImg(${card.id},${i})"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--text-light)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>`;}).join('')}${card.attachments.length>3?`<span style="font-size:10px;color:var(--text-light);text-align:center;">+${card.attachments.length-3}</span>`:''}</div>`:''}`;
+    ${card.attachments&&card.attachments.length?`<div class="k-card-attachments${card.attachments.length===1?' k-card-attachments-single':''}" style="${card.attachments.length>1?'display:grid;grid-template-columns:repeat('+Math.min(card.attachments.length,3)+',1fr);':''}">${card.attachments.slice(0,3).map((a,i)=>{const src=typeof a==='string'?a:(a.url||a);const nm=a.name||src;const isImg=/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(nm)||src.startsWith('data:image');return isImg?`<div class="k-card-thumb-wrap" onclick="event.stopPropagation();viewCardImg(${card.id},${i})" onmousedown="event.stopPropagation();startThumbDrag(event,${card.id},${i})"><img class="k-card-thumb" src="${src}" style="object-position:center ${card.thumbPos&&card.thumbPos[i]!=null?card.thumbPos[i]:50}%;"><span class="thumb-drag-hint">드래그로 위치 조절</span></div>`:`<div class="k-card-thumb" style="display:flex;align-items:center;justify-content:center;background:var(--bg);font-size:8px;text-align:center;overflow:hidden;" onclick="event.stopPropagation();viewCardImg(${card.id},${i})"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--text-light)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>`;}).join('')}${card.attachments.length>3?`<span style="font-size:10px;color:var(--text-light);text-align:center;">+${card.attachments.length-3}</span>`:''}</div>`:''}`;
   div.addEventListener('click',()=>openEditModal(card.id));
   div.addEventListener('contextmenu',e=>showCtxMenu(e,card.id));
   div.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',card.id);div.classList.add('dragging');});
